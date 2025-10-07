@@ -1,0 +1,58 @@
+# =====================
+# ASP.NET / C# / Visual Studio
+# =====================
+
+# Build output folders
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio cache folders
+.vs/
+.vscode/
+
+# NuGet packages
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET temporary files
+App_Data/
+
+# Publish outputs
+*.Publish.xml
+*.deploy.cmd
+*.deploy-readme.txt
+
+# Logs
+*.log
+
+# Env files
+.env
+.env.*
+
+# ASP.NET environment-specific config files
+appsettings.Development.json
+appsettings.Staging.json
+appsettings.Production.json
+
+# Visual Studio debug profiles
+Properties/launchSettings.json
+
+# OS Specific
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Linux
+*~

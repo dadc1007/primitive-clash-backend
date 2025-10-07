@@ -1,0 +1,6 @@
+@PrimitiveClash.Backend_HostAddress = http://localhost:5247
+
+GET {{PrimitiveClash.Backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
