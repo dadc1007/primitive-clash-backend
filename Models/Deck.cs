@@ -5,7 +5,7 @@ namespace PrimitiveClashBackend.Models
     public class Deck
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public List<PlayerCard> PlayerCards { get; set; } = new List<PlayerCard>();
+        public List<PlayerCard> PlayerCards { get; set; } = [];
 
         public void AddCard(PlayerCard card)
         {

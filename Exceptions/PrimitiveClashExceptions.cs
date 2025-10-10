@@ -19,4 +19,19 @@ namespace PrimitiveClash.Backend.Exceptions
     {
         public CardNotInDeckException() : base("The card is not in the deck") { }
     }
+
+    public class NotEnoughGoldException : GameException
+    {
+        public NotEnoughGoldException() : base("Not enough gold") { }
+    }
+
+    public class NotEnoughGemsException : GameException
+    {
+        public NotEnoughGemsException() : base("Not enough gems") { }
+    }
+
+    public class NotEnoughTrophiesException : GameException
+    {
+        public NotEnoughTrophiesException() : base("The number of trophies lost cannot be greater than the current amount") { }
+    }
 }

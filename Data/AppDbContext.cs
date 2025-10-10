@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.Cards;
 using PrimitiveClash.Backend.Models.Enums;
 using PrimitiveClashBackend.Models;
@@ -60,6 +61,26 @@ namespace PrimitiveClash.Backend.Data
                 .HasMany(d => d.PlayerCards)
                 .WithMany()
                 .UsingEntity(j => j.ToTable("DeckContent"));
+
+            // User
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.PlayerCards)
+                .WithOne()
+                .HasForeignKey(pc => pc.UserId);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Deck)
+                .WithOne()
+                .HasForeignKey<User>(u => u.DeckId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
