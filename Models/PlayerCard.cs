@@ -1,0 +1,33 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using PrimitiveClash.Backend.Models.Cards;
+
+namespace PrimitiveClashBackend.Models
+{
+    public class PlayerCard
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public int Level { get; set; } = 1;
+        public int Quantity { get; private set; } = 0;
+        public required Guid CardId { get; set; }
+        public required Card Card { get; set; }
+
+        public void IncreaseQuantity(int amount)
+        {
+            Quantity += amount;
+        }
+
+        public void DecreaseQuantity(int amount)
+        {
+            if (amount > Quantity)
+            {
+                throw new InvalidOperationException("Cannot decrease quantity below zero.");
+            }
+            Quantity -= amount;
+        }
+
+        public void Upgrade()
+        {
+            Level++;
+        }
+    }
+}

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PrimitiveClash.Backend.Models.Cards;
 using PrimitiveClash.Backend.Models.Enums;
+using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Data
 {
@@ -10,6 +11,7 @@ namespace PrimitiveClash.Backend.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<Card> Cards { get; set; }
+        public DbSet<PlayerCard> PlayerCards { get; set; }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
@@ -19,6 +21,7 @@ namespace PrimitiveClash.Backend.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Card
             modelBuilder.Entity<Card>()
                 .HasIndex(c => c.Name)
                 .IsUnique();
@@ -43,6 +46,13 @@ namespace PrimitiveClash.Backend.Data
                         c => c.ToList()
                     )
                 );
+
+            // PlayerCard
+            modelBuilder.Entity<PlayerCard>()
+                .HasOne(pc => pc.Card)
+                .WithMany()
+                .HasForeignKey(pc => pc.CardId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

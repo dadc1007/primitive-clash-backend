@@ -37,16 +37,44 @@ namespace PrimitiveClash.Backend.Migrations
                     table.PrimaryKey("PK_Cards", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "PlayerCards",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    CardId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PlayerCards", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PlayerCards_Cards_CardId",
+                        column: x => x.CardId,
+                        principalTable: "Cards",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Cards_Name",
                 table: "Cards",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlayerCards_CardId",
+                table: "PlayerCards",
+                column: "CardId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "PlayerCards");
+
             migrationBuilder.DropTable(
                 name: "Cards");
         }

@@ -12,7 +12,7 @@ using PrimitiveClash.Backend.Data;
 namespace PrimitiveClash.Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251009165556_InitialCreate")]
+    [Migration("20251009225854_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -68,6 +68,28 @@ namespace PrimitiveClash.Backend.Migrations
                     b.HasDiscriminator<string>("CardType").HasValue("Card");
 
                     b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("PrimitiveClashBackend.Models.PlayerCard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CardId");
+
+                    b.ToTable("PlayerCards");
                 });
 
             modelBuilder.Entity("PrimitiveClash.Backend.Models.Cards.BuildingCard", b =>
@@ -140,6 +162,17 @@ namespace PrimitiveClash.Backend.Migrations
                         .HasColumnType("integer");
 
                     b.HasDiscriminator().HasValue("Troop");
+                });
+
+            modelBuilder.Entity("PrimitiveClashBackend.Models.PlayerCard", b =>
+                {
+                    b.HasOne("PrimitiveClash.Backend.Models.Cards.Card", "Card")
+                        .WithMany()
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Card");
                 });
 #pragma warning restore 612, 618
         }
