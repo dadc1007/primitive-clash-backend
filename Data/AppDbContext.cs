@@ -14,6 +14,7 @@ namespace PrimitiveClash.Backend.Data
         public DbSet<Card> Cards { get; set; }
         public DbSet<PlayerCard> PlayerCards { get; set; }
         public DbSet<Deck> Decks { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
