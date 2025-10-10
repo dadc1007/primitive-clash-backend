@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PrimitiveClash.Backend.Data;
@@ -11,9 +12,11 @@ using PrimitiveClash.Backend.Data;
 namespace PrimitiveClash.Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251010060718_AddDecksAndDeckContent")]
+    partial class AddDecksAndDeckContent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,15 +27,15 @@ namespace PrimitiveClash.Backend.Migrations
 
             modelBuilder.Entity("DeckPlayerCard", b =>
                 {
+                    b.Property<Guid>("CardsId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("DeckId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("PlayerCardsId")
-                        .HasColumnType("uuid");
+                    b.HasKey("CardsId", "DeckId");
 
-                    b.HasKey("DeckId", "PlayerCardsId");
-
-                    b.HasIndex("PlayerCardsId");
+                    b.HasIndex("DeckId");
 
                     b.ToTable("DeckContent", (string)null);
                 });
@@ -189,15 +192,15 @@ namespace PrimitiveClash.Backend.Migrations
 
             modelBuilder.Entity("DeckPlayerCard", b =>
                 {
-                    b.HasOne("PrimitiveClashBackend.Models.Deck", null)
+                    b.HasOne("PrimitiveClashBackend.Models.PlayerCard", null)
                         .WithMany()
-                        .HasForeignKey("DeckId")
+                        .HasForeignKey("CardsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PrimitiveClashBackend.Models.PlayerCard", null)
+                    b.HasOne("PrimitiveClashBackend.Models.Deck", null)
                         .WithMany()
-                        .HasForeignKey("PlayerCardsId")
+                        .HasForeignKey("DeckId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

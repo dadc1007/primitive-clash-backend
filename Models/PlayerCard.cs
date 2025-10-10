@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using PrimitiveClash.Backend.Models.Cards;
 
 namespace PrimitiveClashBackend.Models

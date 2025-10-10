@@ -12,6 +12,7 @@ namespace PrimitiveClash.Backend.Data
 
         public DbSet<Card> Cards { get; set; }
         public DbSet<PlayerCard> PlayerCards { get; set; }
+        public DbSet<Deck> Decks { get; set; }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
@@ -53,6 +54,12 @@ namespace PrimitiveClash.Backend.Data
                 .WithMany()
                 .HasForeignKey(pc => pc.CardId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Deck
+            modelBuilder.Entity<Deck>()
+                .HasMany(d => d.PlayerCards)
+                .WithMany()
+                .UsingEntity(j => j.ToTable("DeckContent"));
         }
     }
 }
