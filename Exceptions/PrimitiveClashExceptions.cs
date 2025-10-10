@@ -5,6 +5,11 @@ namespace PrimitiveClash.Backend.Exceptions
         public GameException(string message) : base(message) { }
     }
 
+    public class NotEnoughPlayerCardsException : GameException
+    {
+        public NotEnoughPlayerCardsException() : base("Not enough player cards to upgrade") { }
+    }
+
     public class LimitCardsInDeckException : GameException
     {
         public LimitCardsInDeckException() : base("A deck can only have 8 cards") { }

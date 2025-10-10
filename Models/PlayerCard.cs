@@ -1,3 +1,4 @@
+using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models.Cards;
 
 namespace PrimitiveClashBackend.Models
@@ -17,18 +18,19 @@ namespace PrimitiveClashBackend.Models
             Quantity += amount;
         }
 
-        public void DecreaseQuantity(int amount)
+        public void Upgrade(int amount)
+        {
+            DecreaseQuantity(amount);
+            Level++;
+        }
+
+        private void DecreaseQuantity(int amount)
         {
             if (amount > Quantity)
             {
-                throw new InvalidOperationException("Cannot decrease quantity below zero.");
+                throw new NotEnoughPlayerCardsException();
             }
             Quantity -= amount;
-        }
-
-        public void Upgrade()
-        {
-            Level++;
         }
     }
 }
