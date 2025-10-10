@@ -9,6 +9,7 @@ namespace PrimitiveClashBackend.Models
         public int Quantity { get; private set; } = 0;
         public required Guid CardId { get; set; }
         public required Card Card { get; set; }
+        public Guid? DeckId { get; set; }
         public required Guid UserId { get; set; }
 
         public void IncreaseQuantity(int amount)

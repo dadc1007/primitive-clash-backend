@@ -59,8 +59,8 @@ namespace PrimitiveClash.Backend.Data
             // Deck
             modelBuilder.Entity<Deck>()
                 .HasMany(d => d.PlayerCards)
-                .WithMany()
-                .UsingEntity(j => j.ToTable("DeckContent"));
+                .WithOne()
+                .HasForeignKey(pc => pc.DeckId);
 
             // User
             modelBuilder.Entity<User>()
