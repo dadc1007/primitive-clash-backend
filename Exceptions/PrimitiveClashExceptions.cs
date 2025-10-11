@@ -1,18 +1,10 @@
 namespace PrimitiveClash.Backend.Exceptions
 {
-    public class GameException : Exception
-    {
-        public GameException(string message) : base(message) { }
-    }
+    public class GameException(string message) : Exception(message) { }
 
     public class NotEnoughPlayerCardsException : GameException
     {
         public NotEnoughPlayerCardsException() : base("Not enough player cards to upgrade") { }
-    }
-
-    public class LimitCardsInDeckException : GameException
-    {
-        public LimitCardsInDeckException() : base("A deck can only have 8 cards") { }
     }
 
     public class CardAlreadyInDeckException : GameException
@@ -39,4 +31,11 @@ namespace PrimitiveClash.Backend.Exceptions
     {
         public NotEnoughTrophiesException() : base("The number of trophies lost cannot be greater than the current amount") { }
     }
+
+    public class CardsMissingException : GameException
+    {
+        public CardsMissingException() : base("Not all required initial cards templates were found in the database") { }
+    }
+
+    public class InvalidDeckSizeException(int number) : GameException($"A deck can only have {number} cards") { }
 }

@@ -6,12 +6,20 @@ namespace PrimitiveClashBackend.Models
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public List<PlayerCard> PlayerCards { get; set; } = [];
+        private readonly int _maxSizeDeck;
+
+        public Deck() { }
+
+        public Deck(int maxSizeDeck)
+        {
+            _maxSizeDeck = maxSizeDeck;
+        }
 
         public void AddCard(PlayerCard card)
         {
-            if (PlayerCards.Count >= 8)
+            if (PlayerCards.Count >= _maxSizeDeck)
             {
-                throw new LimitCardsInDeckException();
+                throw new InvalidDeckSizeException(_maxSizeDeck);
             }
             if (PlayerCards.Contains(card))
             {
