@@ -40,7 +40,15 @@ namespace PrimitiveClashBackend.Models
         public double AverageElixirCost()
         {
             if (PlayerCards.Count == 0) return 0;
-            return PlayerCards.Average(c => c.Card.ElixirCost);
+
+            double average = PlayerCards.Average(c => c.Card.ElixirCost);
+
+            return Math.Round(average, 1);
+        }
+
+        public int Size()
+        {
+            return PlayerCards.Count;
         }
     }
 }
