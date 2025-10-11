@@ -1,9 +1,21 @@
 using Microsoft.EntityFrameworkCore;
+using PrimitiveClash.Backend.Configuration;
 using PrimitiveClash.Backend.Data;
+using PrimitiveClash.Backend.Services;
+using PrimitiveClash.Backend.Services.Impl;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// DB context
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configuration    
+builder.Services.Configure<GameSettings>(builder.Configuration.GetSection("GameSettings"));
+
+// Dependency Injection for services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IDeckService, DeckService>();
+builder.Services.AddScoped<IPlayerCardService, PlayerCardService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
