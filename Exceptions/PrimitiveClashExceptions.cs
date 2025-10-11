@@ -43,4 +43,8 @@ namespace PrimitiveClash.Backend.Exceptions
     {
         public DeckNotFoundException() : base("Deck not found for the user") { }
     }
+
+    public class UsernameExistsException(string username) : GameException($"The username '{username}' is already taken") { }
+
+    public class EmailExistsException(string email) : GameException($"The email '{email}' is already taken") { }
 }
