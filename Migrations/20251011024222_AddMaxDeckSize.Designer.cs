@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PrimitiveClash.Backend.Data;
@@ -11,9 +12,11 @@ using PrimitiveClash.Backend.Data;
 namespace PrimitiveClash.Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251011024222_AddMaxDeckSize")]
+    partial class AddMaxDeckSize
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,6 +76,9 @@ namespace PrimitiveClash.Backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("DeckId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -99,6 +105,9 @@ namespace PrimitiveClash.Backend.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DeckId")
+                        .IsUnique();
+
                     b.HasIndex("Email")
                         .IsUnique();
 
@@ -114,13 +123,7 @@ namespace PrimitiveClash.Backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
 
                     b.ToTable("Decks");
                 });
@@ -229,13 +232,15 @@ namespace PrimitiveClash.Backend.Migrations
                     b.HasDiscriminator().HasValue("Troop");
                 });
 
-            modelBuilder.Entity("PrimitiveClashBackend.Models.Deck", b =>
+            modelBuilder.Entity("PrimitiveClash.Backend.Models.User", b =>
                 {
-                    b.HasOne("PrimitiveClash.Backend.Models.User", null)
-                        .WithOne("Deck")
-                        .HasForeignKey("PrimitiveClashBackend.Models.Deck", "UserId")
+                    b.HasOne("PrimitiveClashBackend.Models.Deck", "Deck")
+                        .WithOne()
+                        .HasForeignKey("PrimitiveClash.Backend.Models.User", "DeckId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Deck");
                 });
 
             modelBuilder.Entity("PrimitiveClashBackend.Models.PlayerCard", b =>
@@ -261,8 +266,6 @@ namespace PrimitiveClash.Backend.Migrations
 
             modelBuilder.Entity("PrimitiveClash.Backend.Models.User", b =>
                 {
-                    b.Navigation("Deck");
-
                     b.Navigation("PlayerCards");
                 });
 
