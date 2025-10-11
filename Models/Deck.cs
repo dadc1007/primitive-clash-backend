@@ -6,6 +6,7 @@ namespace PrimitiveClashBackend.Models
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public List<PlayerCard> PlayerCards { get; set; } = [];
+        public required Guid UserId { get; set; }
         private readonly int _maxSizeDeck;
 
         public Deck() { }

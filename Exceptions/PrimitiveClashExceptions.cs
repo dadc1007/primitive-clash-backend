@@ -38,4 +38,9 @@ namespace PrimitiveClash.Backend.Exceptions
     }
 
     public class InvalidDeckSizeException(int number) : GameException($"A deck can only have {number} cards") { }
+
+    public class DeckNotFoundException : GameException
+    {
+        public DeckNotFoundException() : base("Deck not found for the user") { }
+    }
 }
