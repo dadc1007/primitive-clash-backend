@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PrimitiveClash.Backend.Configuration;
 using PrimitiveClash.Backend.Data;
@@ -21,7 +22,10 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         public async Task<Deck> InitializeDeck(Guid userId)
         {
-            Deck deck = new(_maxSizeDeck);
+            Deck deck = new(_maxSizeDeck)
+            {
+                UserId = userId
+            };
             List<PlayerCard> initialPlayerCards = await _playerCardService.CreateStarterCards(userId, deck.Id);
 
             if (initialPlayerCards.Count != _maxSizeDeck)
@@ -33,6 +37,16 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             _context.Decks.Add(deck);
 
+            return deck;
+        }
+
+        public async Task<Deck> GetDeckByUserId(Guid userId)
+        {
+            Deck? deck = await _context.Decks
+                .Where(d => d.UserId == userId)
+                .Include(d => d.PlayerCards)
+                .ThenInclude(pc => pc.Card)
+                .FirstOrDefaultAsync() ?? throw new DeckNotFoundException();
             return deck;
         }
     }

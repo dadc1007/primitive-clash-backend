@@ -25,7 +25,6 @@ namespace PrimitiveClash.Backend.Services.Impl
             };
 
             Deck deck = await _deckService.InitializeDeck(user.Id);
-            user.DeckId = deck.Id;
             user.Deck = deck;
 
             _context.Users.Add(user);

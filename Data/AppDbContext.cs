@@ -80,7 +80,7 @@ namespace PrimitiveClash.Backend.Data
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Deck)
                 .WithOne()
-                .HasForeignKey<User>(u => u.DeckId)
+                .HasForeignKey<Deck>(d => d.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
