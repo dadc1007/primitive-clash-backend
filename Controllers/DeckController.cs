@@ -11,14 +11,9 @@ namespace PrimitiveClash.Backend.Controllers
     [ApiController]
     [Route("api/decks")]
     [Produces(MediaTypeNames.Application.Json)]
-    public class DeckController : ControllerBase
+    public class DeckController(IDeckService deckService) : ControllerBase
     {
-        private readonly IDeckService _deckService;
-
-        public DeckController(IDeckService deckService)
-        {
-            _deckService = deckService;
-        }
+        private readonly IDeckService _deckService = deckService;
 
         [HttpGet("user/{userId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DeckResponse))]

@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using PrimitiveClash.Backend.Data;
+using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClashBackend.Models;
 
@@ -17,6 +19,16 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         public async Task<User> RegisterUser(string username, string email, string password)
         {
+            if (await UsernameExists(username))
+            {
+                throw new UsernameExistsException(username);
+            }
+
+            if (await EmailExists(email))
+            {
+                throw new EmailExistsException(email);
+            }
+
             User user = new()
             {
                 Username = username,
@@ -31,6 +43,16 @@ namespace PrimitiveClash.Backend.Services.Impl
             await _context.SaveChangesAsync();
 
             return user;
+        }
+
+        private async Task<bool> UsernameExists(string username)
+        {
+            return await _context.Users.AnyAsync(u => u.Username == username);
+        }
+
+        private async Task<bool> EmailExists(string email)
+        {
+            return await _context.Users.AnyAsync(u => u.Email == email);
         }
     }
 }

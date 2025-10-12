@@ -1,10 +1,10 @@
 using PrimitiveClash.Backend.Models;
-using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Services
 {
-    public interface IUserService
+    public interface IAuthService
     {
         Task<User> RegisterUser(string username, string email, string password);
+        Task<User> LoginUser(string email, string password);
     }
 }
