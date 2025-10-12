@@ -45,19 +45,6 @@ namespace PrimitiveClash.Backend.Services.Impl
             return user;
         }
 
-        public async Task<User> loginUser(string username, string password)
-        {
-            User? user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == username);
-
-            if (user == null || user.PasswordHash != password)
-            {
-                throw new InvalidCredentialsException();
-            }
-
-            return user;
-        }
-
         private async Task<bool> UsernameExists(string username)
         {
             return await _context.Users.AnyAsync(u => u.Username == username);

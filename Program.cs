@@ -16,6 +16,7 @@ builder.Services.Configure<GameSettings>(builder.Configuration.GetSection("GameS
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IDeckService, DeckService>();
 builder.Services.AddScoped<IPlayerCardService, PlayerCardService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
