@@ -52,4 +52,6 @@ namespace PrimitiveClash.Backend.Exceptions
     {
         public InvalidCredentialsException() : base("Invalid username or password") { }
     }
+
+    public class PlayerAlreadyInQueueException(Guid userId) : GameException($"The player with ID '{userId}' is already in the matchmaking queue.") { }
 }
