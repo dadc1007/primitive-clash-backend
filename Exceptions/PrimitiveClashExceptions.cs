@@ -54,4 +54,22 @@ namespace PrimitiveClash.Backend.Exceptions
     }
 
     public class PlayerAlreadyInQueueException(Guid userId) : GameException($"The player with ID '{userId}' is already in the matchmaking queue.") { }
+
+    public class TowerTemplateNotFoundException(string type) : GameException($"The tower template of type '{type}' was not found") { }
+
+    public class DefaultArenaTemplateNotFoundException : GameException
+    {
+        public DefaultArenaTemplateNotFoundException() : base("There are no arena templates in the database") { }
+    }
+
+    public class InvalidPlayersNumberException : GameException
+    {
+        public InvalidPlayersNumberException() : base("There must be two players per game") { }
+    }
+
+    public class GameNotFoundException(Guid id) : GameException($"The game with ID '{id}' was not found") { }
+
+    public class InvalidGameDataException(Guid id) : GameException($"Failed to deserialize game data for ID {id}") { }
+
+    public class ConcurrencyException(Guid sessionId, int maxRetries) : GameException($"Failed to update game state for session {sessionId} after {maxRetries} retries") { }
 }

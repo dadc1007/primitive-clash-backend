@@ -6,16 +6,10 @@ using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
-    public class AuthService : IAuthService
+    public class AuthService(AppDbContext context, IUserService userService) : IAuthService
     {
-        private readonly AppDbContext _context;
-        private readonly IUserService _userService;
-
-        public AuthService(AppDbContext context, IUserService userService)
-        {
-            _context = context;
-            _userService = userService;
-        }
+        private readonly AppDbContext _context = context;
+        private readonly IUserService _userService = userService;
 
         public async Task<User> RegisterUser(string username, string email, string password)
         {

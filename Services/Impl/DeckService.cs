@@ -7,18 +7,11 @@ using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
-    public class DeckService : IDeckService
+    public class DeckService(AppDbContext context, IPlayerCardService playerCardService, IOptions<GameSettings> gameSettings) : IDeckService
     {
-        private readonly AppDbContext _context;
-        private readonly IPlayerCardService _playerCardService;
-        private readonly int _maxSizeDeck;
-
-        public DeckService(AppDbContext context, IPlayerCardService playerCardService, IOptions<GameSettings> gameSettings)
-        {
-            _context = context;
-            _playerCardService = playerCardService;
-            _maxSizeDeck = gameSettings.Value.MaxDeckSize;
-        }
+        private readonly AppDbContext _context = context;
+        private readonly IPlayerCardService _playerCardService = playerCardService;
+        private readonly int _maxSizeDeck = gameSettings.Value.MaxDeckSize;
 
         public async Task<Deck> InitializeDeck(Guid userId)
         {
