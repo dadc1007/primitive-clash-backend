@@ -3,18 +3,17 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.Cards;
 using PrimitiveClash.Backend.Models.Enums;
-using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
         public DbSet<Card> Cards { get; set; }
         public DbSet<PlayerCard> PlayerCards { get; set; }
         public DbSet<Deck> Decks { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<TowerTemplate> TowerTemplates { get; set; }
+        public DbSet<ArenaTemplate> ArenaTemplates { get; set; }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
@@ -82,6 +81,16 @@ namespace PrimitiveClash.Backend.Data
                 .WithOne()
                 .HasForeignKey<Deck>(d => d.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // TowerTemplate
+            modelBuilder.Entity<TowerTemplate>()
+                .HasIndex(tt => tt.Type)
+                .IsUnique();
+
+            // ArenaTemplate
+            modelBuilder.Entity<ArenaTemplate>()
+                .HasIndex(a => a.Name)
+                .IsUnique();
         }
     }
 }

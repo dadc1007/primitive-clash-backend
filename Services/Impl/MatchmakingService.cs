@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
 using PrimitiveClash.Backend.DTOs.Matchmaking;
@@ -8,13 +7,14 @@ using StackExchange.Redis;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
-    public class MatchmakingService(IHubContext<MatchmakingHub> hubContext, ILogger<MatchmakingService> logger, IDatabase redis) : IMatchmakingService, IHostedService
+    public class MatchmakingService(IHubContext<MatchmakingHub> hubContext, ILogger<MatchmakingService> logger, IDatabase redis, IServiceScopeFactory scopeFactory) : IMatchmakingService, IHostedService
     {
         private const string MatchmakingQueueKey = "matchmaking:queue";
         private const string PlayersInQueueSetKey = "matchmaking:active_players";
         private readonly IHubContext<MatchmakingHub> _hubContext = hubContext;
         private readonly ILogger<MatchmakingService> _logger = logger;
         private readonly IDatabase _redis = redis;
+        private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
@@ -31,6 +31,16 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         public async Task EnqueuePlayer(Guid userId, string connectionId)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var gameService = scope.ServiceProvider.GetRequiredService<IGameService>();
+
+            if (await gameService.IsUserInGame(userId))
+            {
+                _logger.LogWarning("Player {UserId} attempted to enqueue while in an active game.", userId);
+                await _hubContext.Clients.Client(connectionId).SendAsync("Error", "You are still considered in an active game session. Cannot search for a new match.");
+                return;
+            }
+
             if (await _redis.SetContainsAsync(PlayersInQueueSetKey, userId.ToString()))
             {
                 _logger.LogWarning("Attempted to enqueue player {UserId} who is already in queue.", userId);
@@ -148,12 +158,31 @@ namespace PrimitiveClash.Backend.Services.Impl
         private async Task FinalizeMatchAsync(PlayerQueueItem player1, PlayerQueueItem player2)
         {
             Guid sessionId = Guid.NewGuid();
+            List<Guid> userIds = [player1.UserId, player2.UserId];
 
             _logger.LogInformation("Match finalized. Session ID: {SessionId} between {Player1Id} and {Player2Id}.",
                 sessionId, player1.UserId, player2.UserId);
 
-            await _hubContext.Clients.Client(player1.ConnectionId).SendAsync("MatchFound", new { sessionId, opponentId = player2.UserId });
-            await _hubContext.Clients.Client(player2.ConnectionId).SendAsync("MatchFound", new { sessionId, opponentId = player1.UserId });
+            using var scope = _scopeFactory.CreateScope();
+            var gameService = scope.ServiceProvider.GetRequiredService<IGameService>();
+
+            try
+            {
+                await gameService.CreateNewGame(sessionId, userIds);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create game for session {SessionId}. Players: {P1}, {P2}",
+                    sessionId, player1.UserId, player2.UserId);
+
+                await _hubContext.Clients.Client(player1.ConnectionId).SendAsync("Error", "Game creation failed. Try again.");
+                await _hubContext.Clients.Client(player2.ConnectionId).SendAsync("Error", "Game creation failed. Try again.");
+
+                return;
+            }
+
+            await _hubContext.Clients.Client(player1.ConnectionId).SendAsync("MatchFound", new { sessionId, opponentId = player2.UserId, userId = player1.UserId });
+            await _hubContext.Clients.Client(player2.ConnectionId).SendAsync("MatchFound", new { sessionId, opponentId = player1.UserId, userId = player2.UserId });
         }
     }
 }

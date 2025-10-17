@@ -28,6 +28,12 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IDeckService, DeckService>();
 builder.Services.AddScoped<IPlayerCardService, PlayerCardService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPlayerStateService, PlayerStateService>();
+builder.Services.AddScoped<ITowerTemplateService, TowerTemplateService>();
+builder.Services.AddScoped<ITowerService, TowerService>();
+builder.Services.AddScoped<IArenaTemplateService, ArenaTemplateService>();
+builder.Services.AddScoped<IArenaService, ArenaService>();
+builder.Services.AddScoped<IGameService, GameService>();
 
 // SignalR Service
 builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString!);
@@ -49,6 +55,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
-app.MapHub<MatchmakingHub>("/matchmaking");
+app.MapHub<MatchmakingHub>("/hubs/matchmaking");
+app.MapHub<GameHub>("/hubs/Game");
 app.MapControllers();
 app.Run();

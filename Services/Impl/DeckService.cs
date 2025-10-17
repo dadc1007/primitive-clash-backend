@@ -3,22 +3,15 @@ using Microsoft.Extensions.Options;
 using PrimitiveClash.Backend.Configuration;
 using PrimitiveClash.Backend.Data;
 using PrimitiveClash.Backend.Exceptions;
-using PrimitiveClashBackend.Models;
+using PrimitiveClash.Backend.Models;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
-    public class DeckService : IDeckService
+    public class DeckService(AppDbContext context, IPlayerCardService playerCardService, IOptions<GameSettings> gameSettings) : IDeckService
     {
-        private readonly AppDbContext _context;
-        private readonly IPlayerCardService _playerCardService;
-        private readonly int _maxSizeDeck;
-
-        public DeckService(AppDbContext context, IPlayerCardService playerCardService, IOptions<GameSettings> gameSettings)
-        {
-            _context = context;
-            _playerCardService = playerCardService;
-            _maxSizeDeck = gameSettings.Value.MaxDeckSize;
-        }
+        private readonly AppDbContext _context = context;
+        private readonly IPlayerCardService _playerCardService = playerCardService;
+        private readonly int _maxSizeDeck = gameSettings.Value.MaxDeckSize;
 
         public async Task<Deck> InitializeDeck(Guid userId)
         {
@@ -46,7 +39,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 .Where(d => d.UserId == userId)
                 .Include(d => d.PlayerCards)
                 .ThenInclude(pc => pc.Card)
-                .FirstOrDefaultAsync() ?? throw new DeckNotFoundException();
+                .FirstOrDefaultAsync() ?? throw new DeckNotFoundException(userId);
             return deck;
         }
     }

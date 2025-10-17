@@ -1,5 +1,5 @@
 using PrimitiveClash.Backend.DTOs.Decks.Responses;
-using PrimitiveClashBackend.Models;
+using PrimitiveClash.Backend.Models;
 
 namespace PrimitiveClash.Backend.Utils.Mappers
 {

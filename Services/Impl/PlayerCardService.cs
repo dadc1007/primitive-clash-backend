@@ -3,22 +3,16 @@ using Microsoft.Extensions.Options;
 using PrimitiveClash.Backend.Configuration;
 using PrimitiveClash.Backend.Data;
 using PrimitiveClash.Backend.Exceptions;
+using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.Cards;
-using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
-    public class PlayerCardService : IPlayerCardService
+    public class PlayerCardService(AppDbContext context, IOptions<GameSettings> gameSettings) : IPlayerCardService
     {
-        private readonly AppDbContext _context;
+        private readonly AppDbContext _context = context;
 
-        private readonly List<string> _starterCardNames;
-
-        public PlayerCardService(AppDbContext context, IOptions<GameSettings> gameSettings)
-        {
-            _context = context;
-            _starterCardNames = gameSettings.Value.StarterCardNames;
-        }
+        private readonly List<string> _starterCardNames = gameSettings.Value.StarterCardNames;
 
         public async Task<List<PlayerCard>> CreateStarterCards(Guid userId, Guid deckId)
         {

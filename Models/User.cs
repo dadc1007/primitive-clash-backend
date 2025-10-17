@@ -1,5 +1,4 @@
 using PrimitiveClash.Backend.Exceptions;
-using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Models
 {
