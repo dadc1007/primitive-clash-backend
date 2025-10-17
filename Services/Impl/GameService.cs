@@ -21,7 +21,12 @@ namespace PrimitiveClash.Backend.Services.Impl
                 throw new InvalidPlayersNumberException();
             }
 
-            List<PlayerState> playerStates = [.. userIds.Select(_playerStateService.CreatePlayerState)];
+            List<PlayerState> playerStates = [];
+            foreach (var userId in userIds)
+            {
+                PlayerState playerState = await _playerStateService.CreatePlayerState(userId);
+                playerStates.Add(playerState);
+            }
 
             Dictionary<Guid, List<Tower>> towers = await _towerService.CreateAllGameTowers(playerStates[0].Id, playerStates[1].Id);
             Arena arena = await _arenaService.CreateArena(towers);

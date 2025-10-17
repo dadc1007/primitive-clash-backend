@@ -4,6 +4,6 @@ namespace PrimitiveClash.Backend.Services
 {
     public interface IPlayerStateService
     {
-        PlayerState CreatePlayerState(Guid userId);
+        Task<PlayerState> CreatePlayerState(Guid userId);
     }
 }

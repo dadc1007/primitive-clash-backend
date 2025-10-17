@@ -1,7 +1,7 @@
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models.Cards;
 
-namespace PrimitiveClashBackend.Models
+namespace PrimitiveClash.Backend.Models
 {
     public class PlayerCard
     {

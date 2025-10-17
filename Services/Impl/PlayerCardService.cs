@@ -3,8 +3,8 @@ using Microsoft.Extensions.Options;
 using PrimitiveClash.Backend.Configuration;
 using PrimitiveClash.Backend.Data;
 using PrimitiveClash.Backend.Exceptions;
+using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.Cards;
-using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {

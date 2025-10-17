@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using PrimitiveClash.Backend.Data;
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
-using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {

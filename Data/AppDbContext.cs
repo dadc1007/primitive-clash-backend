@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.Cards;
 using PrimitiveClash.Backend.Models.Enums;
-using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Data
 {

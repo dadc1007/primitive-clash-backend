@@ -39,10 +39,7 @@ namespace PrimitiveClash.Backend.Exceptions
 
     public class InvalidDeckSizeException(int number) : GameException($"A deck can only have {number} cards") { }
 
-    public class DeckNotFoundException : GameException
-    {
-        public DeckNotFoundException() : base("Deck not found for the user") { }
-    }
+    public class DeckNotFoundException(Guid userId) : GameException($"Deck not found for the user with ID '{userId}'") { }
 
     public class UsernameExistsException(string username) : GameException($"The username '{username}' is already taken") { }
 

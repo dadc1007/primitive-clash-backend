@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using PrimitiveClash.Backend.Configuration;
 using PrimitiveClash.Backend.Data;
 using PrimitiveClash.Backend.Exceptions;
-using PrimitiveClashBackend.Models;
+using PrimitiveClash.Backend.Models;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
@@ -39,7 +39,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 .Where(d => d.UserId == userId)
                 .Include(d => d.PlayerCards)
                 .ThenInclude(pc => pc.Card)
-                .FirstOrDefaultAsync() ?? throw new DeckNotFoundException();
+                .FirstOrDefaultAsync() ?? throw new DeckNotFoundException(userId);
             return deck;
         }
     }
