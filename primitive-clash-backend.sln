@@ -2,7 +2,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimitiveClash.Backend", "PrimitiveClash.Backend.csproj", "{3EB8FA54-6519-0818-19FC-8BEE522B3977}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimitiveClash.Domain", "src\PrimitiveClash.Domain\PrimitiveClash.Domain.csproj", "{E4ED4CE4-7B9B-4E3E-8F5C-5F3B56C0A4B0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimitiveClash.Application", "src\PrimitiveClash.Application\PrimitiveClash.Application.csproj", "{E70D6E42-3A8B-4E2D-BE9E-7C0F3E4C2B11}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimitiveClash.Infrastructure", "src\PrimitiveClash.Infrastructure\PrimitiveClash.Infrastructure.csproj", "{C7C0C6B6-2F7B-4C1C-9B8F-8A5D7F4C3D22}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimitiveClash.WebAPI", "src\PrimitiveClash.WebAPI\PrimitiveClash.WebAPI.csproj", "{A4D5B9B2-0CF4-4B51-9F4A-6D12D3AC1C33}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,10 +16,22 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3EB8FA54-6519-0818-19FC-8BEE522B3977}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3EB8FA54-6519-0818-19FC-8BEE522B3977}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3EB8FA54-6519-0818-19FC-8BEE522B3977}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3EB8FA54-6519-0818-19FC-8BEE522B3977}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4ED4CE4-7B9B-4E3E-8F5C-5F3B56C0A4B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4ED4CE4-7B9B-4E3E-8F5C-5F3B56C0A4B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4ED4CE4-7B9B-4E3E-8F5C-5F3B56C0A4B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4ED4CE4-7B9B-4E3E-8F5C-5F3B56C0A4B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E70D6E42-3A8B-4E2D-BE9E-7C0F3E4C2B11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E70D6E42-3A8B-4E2D-BE9E-7C0F3E4C2B11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E70D6E42-3A8B-4E2D-BE9E-7C0F3E4C2B11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E70D6E42-3A8B-4E2D-BE9E-7C0F3E4C2B11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7C0C6B6-2F7B-4C1C-9B8F-8A5D7F4C3D22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7C0C6B6-2F7B-4C1C-9B8F-8A5D7F4C3D22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7C0C6B6-2F7B-4C1C-9B8F-8A5D7F4C3D22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7C0C6B6-2F7B-4C1C-9B8F-8A5D7F4C3D22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4D5B9B2-0CF4-4B51-9F4A-6D12D3AC1C33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4D5B9B2-0CF4-4B51-9F4A-6D12D3AC1C33}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4D5B9B2-0CF4-4B51-9F4A-6D12D3AC1C33}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4D5B9B2-0CF4-4B51-9F4A-6D12D3AC1C33}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
