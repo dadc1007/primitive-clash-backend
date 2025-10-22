@@ -30,6 +30,7 @@ namespace PrimitiveClash.Backend.Utils.Mappers
             return new CardInDeckResponse(
                 playerCard.Id,
                 playerCard.Card.Name,
+                playerCard.Card.Rarity,
                 playerCard.Card.ElixirCost,
                 playerCard.Level
             );
