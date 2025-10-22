@@ -1,6 +1,6 @@
 using PrimitiveClash.Backend.Exceptions;
 
-namespace PrimitiveClashBackend.Models
+namespace PrimitiveClash.Backend.Models
 {
     public class Deck
     {

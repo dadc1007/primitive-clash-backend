@@ -2,9 +2,9 @@ using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
 using PrimitiveClash.Backend.DTOs.Decks.Responses;
 using PrimitiveClash.Backend.Exceptions;
+using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Services;
 using PrimitiveClash.Backend.Utils.Mappers;
-using PrimitiveClashBackend.Models;
 
 namespace PrimitiveClash.Backend.Controllers
 {

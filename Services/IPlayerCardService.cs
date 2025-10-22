@@ -1,4 +1,4 @@
-using PrimitiveClashBackend.Models;
+using PrimitiveClash.Backend.Models;
 
 namespace PrimitiveClash.Backend.Services
 {

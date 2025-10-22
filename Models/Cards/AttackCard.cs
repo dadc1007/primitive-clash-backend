@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace PrimitiveClash.Backend.Models.Cards
 {
     public abstract class AttackCard : Card
