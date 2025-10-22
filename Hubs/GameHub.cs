@@ -5,11 +5,13 @@ using PrimitiveClash.Backend.Services;
 
 namespace PrimitiveClash.Backend.Hubs
 {
-    public class GameHub(IGameService gameService) : Hub
+    public class GameHub(IGameService gameService, IBattleService battleService) : Hub
     {
         private const string SessionIdKey = "SessionId";
         private const string UserIdKey = "UserId";
         private readonly IGameService _gameService = gameService;
+        private readonly IBattleService _battleService = battleService;
+
 
         public async Task JoinGame(Guid sessionId, Guid userId)
         {
@@ -59,6 +61,33 @@ namespace PrimitiveClash.Backend.Hubs
             }
 
             await base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task SpawnCard(Guid sessionId, Guid userId, Guid cardId, int x, int y)
+        {
+            try
+            {
+                await _battleService.SpawnCard(sessionId, userId, cardId, x, y);
+
+                await Clients.Group(sessionId.ToString())
+                    .SendAsync("CardSpawned", new { userId, cardId, x, y });
+            }
+            catch (NotEnoughElixirException ex)
+            {
+                await Clients.Caller.SendAsync("Error", ex.Message);
+            }
+            catch (InvalidSpawnPositionException ex)
+            {
+                await Clients.Caller.SendAsync("Error", ex.Message);
+            }
+            catch (InvalidCardException ex)
+            {
+                await Clients.Caller.SendAsync("Error", ex.Message);
+            }
+            catch (Exception ex)
+            {
+                await Clients.Caller.SendAsync("Error", $"Unexpected error: {ex.Message}");
+            }
         }
     }
 }

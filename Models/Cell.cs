@@ -10,22 +10,37 @@ namespace PrimitiveClash.Backend.Models
         public required CellType Type { get; set; }
         public Tower? Tower { get; set; }
 
-        public ArenaEntity? Entity { get; set; }
-        public bool IsWalkable()
+        public ArenaEntity? GroundEntity { get; set; }
+        public ArenaEntity? AirEntity { get; set; }
+
+        public bool IsWalkable(ArenaEntity newEntity)
         {
-            return Type != CellType.River && Tower is null;
+            if (Type == CellType.River || Tower is not null)
+                return false;
 
-        }
-
-        public bool IsSummable(ArenaEntity newEntity)
-        {
-            if (Entity is null)
-                return true;
-
-            var existingType = GetMovementType(Entity);
             var newType = GetMovementType(newEntity);
 
-            return existingType != newType;
+            return newType switch
+            {
+                MovementType.Ground => GroundEntity is null,
+                MovementType.Air => AirEntity is null,
+                _ => false
+            };
+        }
+
+        public bool TryPlaceEntity(ArenaEntity newEntity)
+        {
+            if (!IsWalkable(newEntity))
+                return false;
+
+            var type = GetMovementType(newEntity);
+
+            if (type == MovementType.Ground)
+                GroundEntity = newEntity;
+            else if (type == MovementType.Air)
+                AirEntity = newEntity;
+
+            return true;
         }
 
         private static MovementType GetMovementType(ArenaEntity entity)
@@ -35,7 +50,6 @@ namespace PrimitiveClash.Backend.Models
 
             return MovementType.Ground;
         }
-
-
     }
+
 }

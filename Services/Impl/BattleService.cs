@@ -1,3 +1,4 @@
+using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.Entities;
 using StackExchange.Redis;
@@ -16,27 +17,20 @@ namespace PrimitiveClash.Backend.Services.Impl
             _redis = redis;
         }
 
-        public async Task<bool> SpawnCard(Guid sessionId, Guid userId, Guid cardId, int x, int y)
+        public async Task SpawnCard(Guid sessionId, Guid userId, Guid cardId, int x, int y)
         {
             Game game = await _gameService.GetGame(sessionId);
-            var player = game.PlayerStates.FirstOrDefault(p => p.UserId == userId);
-            if (player == null)
-                return false;
+            var player = game.PlayerStates.FirstOrDefault(p => p.UserId == userId)
+                ?? throw new Exception("Player not found in game.");
 
-            var card = player.Cards.FirstOrDefault(c => c.Id == cardId);
-            if (card == null)
-                return false;
+            var card = player.Cards.FirstOrDefault(c => c.Id == cardId)
+                ?? throw new InvalidCardException(cardId);
 
-            bool success = game.GameArena.SpawnEntity(player, card, x, y);
-
-            if (!success)
-                return false;
+            game.GameArena.SpawnEntity(player, card, x, y);
 
             string key = $"game:{sessionId}";
             string updatedJson = JsonSerializer.Serialize(game);
             await _redis.StringSetAsync(key, updatedJson, TimeSpan.FromMinutes(15));
-
-            return true;
         }
     }
 }

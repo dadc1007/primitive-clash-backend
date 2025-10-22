@@ -1,8 +1,13 @@
 using PrimitiveClash.Backend.Models.Cards;
+using System.Text.Json.Serialization;
 
 namespace PrimitiveClash.Backend.Models.Entities
 
 {
+    [JsonDerivedType(typeof(BuildingEntity), typeDiscriminator: "Building")]
+    [JsonDerivedType(typeof(TroopEntity), typeDiscriminator: "Troop")]
+    [JsonDerivedType(typeof(SpellEntity), typeDiscriminator: "Spell")]
+
     public abstract class ArenaEntity
     {
         public Guid Id { get; set; } = Guid.NewGuid();

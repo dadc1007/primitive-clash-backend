@@ -1,3 +1,4 @@
+using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models.Cards;
 using PrimitiveClash.Backend.Models.Entities;
 using PrimitiveClash.Backend.Models.Enums;
@@ -105,40 +106,45 @@ namespace PrimitiveClash.Backend.Models
             }
         }
 
-        public bool IsWalkable(int x, int y)
+        public bool IsInsideBounds(int x, int y)
         {
-            if (x < 0 || y < 0 || y >= Height || x >= Width)
-                return false;
-
-            return Grid[y][x].IsWalkable();
+            return !(x < 0 || y < 0 || y >= Height || x >= Width);
         }
 
-        public bool SpawnEntity(PlayerState player, PlayerCard card, int x, int y)
+        public void SpawnEntity(PlayerState player, PlayerCard card, int x, int y)
         {
-            if (!IsWalkable(x, y))
-                return false;
+            if (!IsInsideBounds(x, y))
+                throw new InvalidSpawnPositionException(x, y);
 
             var cell = Grid[y][x];
 
             var entity = new TroopEntity(player.UserId, card, x, y);
 
-            if (!cell.IsSummable(entity))
-                return false;
+            if (!cell.IsWalkable(entity))
+                throw new InvalidSpawnPositionException(x, y);
 
             if (player.CurrentElixir < card.Card.ElixirCost)
-                return false;
+                throw new NotEnoughElixirException(card.Card.ElixirCost, player.CurrentElixir);
+
+            bool placed = cell.TryPlaceEntity(entity);
+            if (!placed)
+                throw new InvalidSpawnPositionException(x, y);
 
             player.CurrentElixir -= card.Card.ElixirCost;
-            cell.Entity = entity;
-            return true;
         }
 
         public void RemoveTroop(TroopEntity troop)
         {
-            if (troop.PosY >= 0 && troop.PosY < Height && troop.PosX >= 0 && troop.PosX < Width)
-            {
-                Grid[troop.PosY][troop.PosX].Entity = null;
-            }
+            if (!IsInsideBounds(troop.PosX, troop.PosY))
+                return;
+
+            var cell = Grid[troop.PosY][troop.PosX];
+            var movementType = troop.Card.Card is TroopCard card ? card.MovementType : MovementType.Ground;
+
+            if (movementType == MovementType.Ground)
+                cell.GroundEntity = null;
+            else
+                cell.AirEntity = null;
         }
 
         public void RemoveTower(Tower tower)
@@ -152,6 +158,5 @@ namespace PrimitiveClash.Backend.Models
                 }
             }
         }
-
     }
 }
