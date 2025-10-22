@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using PrimitiveClash.Backend.Configuration;
 using PrimitiveClash.Backend.Data;
@@ -7,6 +8,17 @@ using PrimitiveClash.Backend.Services.Impl;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Cors configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy",
+        builder => builder
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
+});
 
 // DB context
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -41,7 +53,11 @@ builder.Services.AddHostedService<MatchmakingService>();
 builder.Services.AddSingleton<IMatchmakingService, MatchmakingService>();
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -53,8 +69,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseCors("CorsPolicy");
+
 app.UseHttpsRedirection();
 app.UseAuthorization();
+
 app.MapHub<MatchmakingHub>("/hubs/matchmaking");
 app.MapHub<GameHub>("/hubs/Game");
 app.MapControllers();
