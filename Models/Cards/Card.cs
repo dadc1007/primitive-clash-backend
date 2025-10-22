@@ -3,10 +3,10 @@ using PrimitiveClash.Backend.Models.Enums;
 
 namespace PrimitiveClash.Backend.Models.Cards
 {
-    [JsonDerivedType(typeof(SpellCard), typeDiscriminator: "Spell")] 
-    [JsonDerivedType(typeof(TroopCard), typeDiscriminator: "Troop")] 
+    [JsonDerivedType(typeof(SpellCard), typeDiscriminator: "Spell")]
+    [JsonDerivedType(typeof(TroopCard), typeDiscriminator: "Troop")]
     [JsonDerivedType(typeof(BuildingCard), typeDiscriminator: "Building")]
-    
+
     public abstract class Card
     {
         public Guid Id { get; set; } = Guid.NewGuid();

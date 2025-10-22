@@ -1,3 +1,5 @@
+using PrimitiveClash.Backend.Models.Cards;
+using PrimitiveClash.Backend.Models.Entities;
 using PrimitiveClash.Backend.Models.Enums;
 
 namespace PrimitiveClash.Backend.Models
@@ -102,5 +104,54 @@ namespace PrimitiveClash.Backend.Models
                 }
             }
         }
+
+        public bool IsWalkable(int x, int y)
+        {
+            if (x < 0 || y < 0 || y >= Height || x >= Width)
+                return false;
+
+            return Grid[y][x].IsWalkable();
+        }
+
+        public bool SpawnEntity(PlayerState player, PlayerCard card, int x, int y)
+        {
+            if (!IsWalkable(x, y))
+                return false;
+
+            var cell = Grid[y][x];
+
+            var entity = new TroopEntity(player.UserId, card, x, y);
+
+            if (!cell.IsSummable(entity))
+                return false;
+
+            if (player.CurrentElixir < card.Card.ElixirCost)
+                return false;
+
+            player.CurrentElixir -= card.Card.ElixirCost;
+            cell.Entity = entity;
+            return true;
+        }
+
+        public void RemoveTroop(TroopEntity troop)
+        {
+            if (troop.PosY >= 0 && troop.PosY < Height && troop.PosX >= 0 && troop.PosX < Width)
+            {
+                Grid[troop.PosY][troop.PosX].Entity = null;
+            }
+        }
+
+        public void RemoveTower(Tower tower)
+        {
+            for (int r = 0; r < Height; r++)
+            {
+                for (int c = 0; c < Width; c++)
+                {
+                    if (Grid[r][c].Tower == tower)
+                        Grid[r][c].Tower = null;
+                }
+            }
+        }
+
     }
 }
