@@ -29,7 +29,7 @@ namespace PrimitiveClash.Backend.Data
                 .IsUnique();
 
             modelBuilder.Entity<Card>()
-                .HasDiscriminator<string>("CardType")
+                .HasDiscriminator<string>("Discriminator")
                 .HasValue<SpellCard>("Spell")
                 .HasValue<TroopCard>("Troop")
                 .HasValue<BuildingCard>("Building");
