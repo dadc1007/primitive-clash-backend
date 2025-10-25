@@ -1,6 +1,6 @@
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models.Cards;
-using PrimitiveClash.Backend.Models.Entities;
+using PrimitiveClash.Backend.Models.ArenaEntities;
 using PrimitiveClash.Backend.Models.Enums;
 
 namespace PrimitiveClash.Backend.Models
@@ -14,11 +14,13 @@ namespace PrimitiveClash.Backend.Models
         public ArenaTemplate ArenaTemplate { get; set; }
         public Cell[][] Grid { get; set; }
         public Dictionary<Guid, List<Tower>> Towers { get; set; }
+        public Dictionary<Guid, List<ArenaEntity>> PlayerEntities { get; set; }
 
         public Arena(ArenaTemplate arenaTemplate, Dictionary<Guid, List<Tower>> towers)
         {
             ArenaTemplate = arenaTemplate;
             Towers = towers;
+            PlayerEntities = towers.Keys.ToDictionary(userId => userId, _ => new List<ArenaEntity>());
 
             Grid = new Cell[Height][];
             for (int i = 0; i < Height; i++)
@@ -101,6 +103,8 @@ namespace PrimitiveClash.Backend.Models
                     if (r >= 0 && r < Height && c >= 0 && c < Width)
                     {
                         Grid[r][c].Tower = tower;
+                        tower.PosX = c;
+                        tower.PosY = r;
                     }
                 }
             }
@@ -111,26 +115,28 @@ namespace PrimitiveClash.Backend.Models
             return !(x < 0 || y < 0 || y >= Height || x >= Width);
         }
 
-        public void SpawnEntity(PlayerState player, PlayerCard card, int x, int y)
+        public void PlaceEntity(ArenaEntity entity)
         {
-            if (!IsInsideBounds(x, y))
-                throw new InvalidSpawnPositionException(x, y);
+            int x = entity.PosX;
+            int y = entity.PosY;
 
-            var cell = Grid[y][x];
-
-            var entity = new TroopEntity(player.UserId, card, x, y);
-
-            if (!cell.IsWalkable(entity))
-                throw new InvalidSpawnPositionException(x, y);
-
-            if (player.CurrentElixir < card.Card.ElixirCost)
-                throw new NotEnoughElixirException(card.Card.ElixirCost, player.CurrentElixir);
-
+            Cell cell = Grid[y][x];
             bool placed = cell.TryPlaceEntity(entity);
-            if (!placed)
-                throw new InvalidSpawnPositionException(x, y);
 
-            player.CurrentElixir -= card.Card.ElixirCost;
+            if (!placed) throw new InvalidSpawnPositionException(x, y);
+
+            if (PlayerEntities.TryGetValue(entity.UserId, out var list))
+            {
+                if (!list.Any(e => e.Id == entity.Id))
+                {
+                    list.Add(entity);
+                }
+            }
+        }
+
+        public IEnumerable<ArenaEntity> GetAllEntities()
+        {
+            return PlayerEntities.Values.SelectMany(list => list);
         }
 
         public void RemoveTroop(TroopEntity troop)

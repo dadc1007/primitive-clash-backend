@@ -5,7 +5,7 @@ using StackExchange.Redis;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
-    public class GameService(IPlayerStateService playerStateService, ITowerService towerService, IArenaService arenaService, IDatabase redis) : IGameService
+    public class GameService(IPlayerStateService playerStateService, ITowerService towerService, IArenaService arenaService, IDatabase redis, IGameLoopService gameLoopService) : IGameService
     {
         private const string GameKey = "game:";
         private const string PlayersInActiveGameSetKey = "game:active_players";
@@ -13,6 +13,7 @@ namespace PrimitiveClash.Backend.Services.Impl
         private readonly ITowerService _towerService = towerService;
         private readonly IArenaService _arenaService = arenaService;
         private readonly IDatabase _redis = redis;
+        private readonly IGameLoopService _gameLoopService = gameLoopService;
 
         public async Task CreateNewGame(Guid sessionId, List<Guid> userIds)
         {
@@ -35,6 +36,8 @@ namespace PrimitiveClash.Backend.Services.Impl
             await Task.WhenAll(
                 userIds.Select(u => _redis.SetAddAsync(PlayersInActiveGameSetKey, u.ToString()))
             );
+
+            _gameLoopService.StartGameLoop(sessionId);
         }
 
         public async Task<Game> GetGame(Guid gameId)
@@ -96,7 +99,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             return await _redis.SetContainsAsync(PlayersInActiveGameSetKey, userId.ToString());
         }
 
-        private async Task SaveGame(Game game)
+        public async Task SaveGame(Game game)
         {
             string gameJson = JsonSerializer.Serialize(game);
             string key = GetKey(game.Id);
@@ -114,7 +117,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             Game? game = JsonSerializer.Deserialize<Game>(gameJson!)
                 ?? throw new InvalidGameDataException(sessionId);
 
-            PlayerState? playerState = game.PlayerStates.FirstOrDefault(ps => ps.UserId == userId);
+            PlayerState? playerState = game.PlayerStates.FirstOrDefault(ps => ps.Id == userId);
 
             if (playerState == null) return game;
 

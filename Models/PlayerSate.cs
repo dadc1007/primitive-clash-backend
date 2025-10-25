@@ -1,9 +1,8 @@
 namespace PrimitiveClash.Backend.Models
 {
-    public class PlayerState(Guid userId, List<PlayerCard> cards)
+    public class PlayerState(Guid id, List<PlayerCard> cards)
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public Guid UserId { get; set; } = userId;
+        public Guid Id { get; set; } = id;
         public bool IsConnected { get; set; } = true;
         public string? ConnectionId { get; set; }
         public List<PlayerCard> Cards { get; set; } = cards;

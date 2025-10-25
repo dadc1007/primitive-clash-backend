@@ -5,7 +5,7 @@ namespace PrimitiveClash.Backend.Models.Cards
     public class TroopCard : AttackCard
     {
         public MovementSpeed MovementSpeed { get; set; }
-
         public MovementType MovementType { get; set; }
+        public int VisionRange { get; set; }
     }
 }

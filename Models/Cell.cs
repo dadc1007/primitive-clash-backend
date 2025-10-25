@@ -1,15 +1,15 @@
 
 using PrimitiveClash.Backend.Models.Cards;
-using PrimitiveClash.Backend.Models.Entities;
+using PrimitiveClash.Backend.Models.ArenaEntities;
 using PrimitiveClash.Backend.Models.Enums;
 
 namespace PrimitiveClash.Backend.Models
 {
     public class Cell
     {
+        public Guid Id { get; set; } = Guid.NewGuid();
         public required CellType Type { get; set; }
         public Tower? Tower { get; set; }
-
         public ArenaEntity? GroundEntity { get; set; }
         public ArenaEntity? AirEntity { get; set; }
 

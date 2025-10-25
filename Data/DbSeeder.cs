@@ -145,6 +145,30 @@ namespace PrimitiveClash.Backend.Data
                 context.ArenaTemplates.Add(arena);
             }
 
+            if (!context.TowerTemplates.Any())
+            {
+                List<TowerTemplate> towers = [
+                    new TowerTemplate
+                    {
+                        Id = Guid.NewGuid(),
+                        Hp = 3200,
+                        Damage = 100,
+                        Range = 6,
+                        Type = TowerType.Leader
+                    },
+                    new TowerTemplate
+                    {
+                        Id = Guid.NewGuid(),
+                        Hp = 2000,
+                        Damage = 100,
+                        Range = 5,
+                        Type = TowerType.Guardian
+                    }
+                ];
+
+                context.TowerTemplates.AddRange(towers);
+            }
+
             context.SaveChanges();
         }
     }

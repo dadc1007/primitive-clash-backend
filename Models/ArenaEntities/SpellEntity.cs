@@ -1,7 +1,8 @@
 
 namespace PrimitiveClash.Backend.Models.ArenaEntities
+
 {
-    public class BuildingEntity(Guid userId, int posX, int posY, PlayerCard card) : AttackEntity(userId, posX, posY)
+    public class SpellEntity(Guid userId, int posX, int posY, PlayerCard card) : ArenaEntity(userId, posX, posY)
     {
         public int LeftTime { get; set; }
         public PlayerCard Card { get; set; } = card;

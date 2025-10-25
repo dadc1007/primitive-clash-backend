@@ -1,15 +1,16 @@
 
-namespace PrimitiveClash.Backend.Models.Entities
+namespace PrimitiveClash.Backend.Models.ArenaEntities
 {
-    public abstract class AttackEntity : ArenaEntity
-    {
-        protected AttackEntity(Guid userId, PlayerCard card, int posX, int posY) : base(userId, card, posX, posY)
-        {
-        }
+    using System.Text.Json.Serialization;
 
+    public abstract class AttackEntity(Guid userId, int posX, int posY) : ArenaEntity(userId, posX, posY)
+    {
         public int Health { get; set; }
 
-        public virtual void Attack() { }
+        // Runtime-only reference to the current attack target. Must not be serialized.
+        [JsonIgnore]
+        public AttackEntity? CurrentTarget { get; set; }
+
         public virtual void TakeDamage(int damage)
         {
             Health -= damage;

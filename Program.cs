@@ -4,6 +4,8 @@ using PrimitiveClash.Backend.Configuration;
 using PrimitiveClash.Backend.Data;
 using PrimitiveClash.Backend.Hubs;
 using PrimitiveClash.Backend.Services;
+using PrimitiveClash.Backend.Services.Factories;
+using PrimitiveClash.Backend.Services.Factories.Impl;
 using PrimitiveClash.Backend.Services.Impl;
 using StackExchange.Redis;
 
@@ -45,10 +47,20 @@ builder.Services.AddScoped<ITowerTemplateService, TowerTemplateService>();
 builder.Services.AddScoped<ITowerService, TowerService>();
 builder.Services.AddScoped<IArenaTemplateService, ArenaTemplateService>();
 builder.Services.AddScoped<IArenaService, ArenaService>();
+builder.Services.AddScoped<IPathfindingService, PathfindingService>();
+builder.Services.AddScoped<IArenaEntityFactory, ArenaEntityFactory>();
+builder.Services.AddScoped<IBattleService, BattleService>();
+builder.Services.AddScoped<IBehaviorService, BehaviourService>();
 builder.Services.AddScoped<IGameService, GameService>();
+builder.Services.AddSingleton<IGameLoopService, GameLoopService>();
+builder.Services.AddHostedService<GameLoopWorker>();
 
 // SignalR Service
-builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString!);
+builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString!).AddJsonProtocol(options =>
+{
+    options.PayloadSerializerOptions.ReferenceHandler =
+            ReferenceHandler.Preserve;
+});
 builder.Services.AddHostedService<MatchmakingService>();
 builder.Services.AddSingleton<IMatchmakingService, MatchmakingService>();
 
