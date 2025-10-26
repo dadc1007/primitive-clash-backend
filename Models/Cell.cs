@@ -9,26 +9,26 @@ namespace PrimitiveClash.Backend.Models
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public required CellType Type { get; set; }
-        public Tower? Tower { get; set; }
-        public ArenaEntity? GroundEntity { get; set; }
-        public ArenaEntity? AirEntity { get; set; }
+        public bool Tower { get; set; } = false;
+        public bool GroundEntity { get; set; } = false;
+        public bool AirEntity { get; set; } = false;
 
-        public bool IsWalkable(ArenaEntity newEntity)
+        public bool IsWalkable(AttackEntity newEntity)
         {
-            if (Type == CellType.River || Tower is not null)
+            if (Type == CellType.River || Tower)
                 return false;
 
             var newType = GetMovementType(newEntity);
 
             return newType switch
             {
-                MovementType.Ground => GroundEntity is null,
-                MovementType.Air => AirEntity is null,
+                MovementType.Ground => GroundEntity is false,
+                MovementType.Air => AirEntity is false,
                 _ => false
             };
         }
 
-        public bool TryPlaceEntity(ArenaEntity newEntity)
+        public bool PlaceEntity(AttackEntity newEntity)
         {
             if (!IsWalkable(newEntity))
                 return false;
@@ -36,14 +36,24 @@ namespace PrimitiveClash.Backend.Models
             var type = GetMovementType(newEntity);
 
             if (type == MovementType.Ground)
-                GroundEntity = newEntity;
+                GroundEntity = true;
             else if (type == MovementType.Air)
-                AirEntity = newEntity;
+                AirEntity = true;
 
             return true;
         }
 
-        private static MovementType GetMovementType(ArenaEntity entity)
+        public void RemoveEntity(AttackEntity newEntity)
+        {
+            var type = GetMovementType(newEntity);
+
+            if (type == MovementType.Ground)
+                GroundEntity = false;
+            else if (type == MovementType.Air)
+                AirEntity = false;
+        }
+
+        public static MovementType GetMovementType(AttackEntity entity)
         {
             if (entity is TroopEntity troop && troop.Card.Card is TroopCard troopCard)
                 return troopCard.MovementType;

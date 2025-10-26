@@ -1,14 +1,15 @@
 
+using System.Text.Json.Serialization;
+
 namespace PrimitiveClash.Backend.Models.ArenaEntities
 {
-    using System.Text.Json.Serialization;
+    [JsonDerivedType(typeof(BuildingEntity), typeDiscriminator: "Building")]
+    [JsonDerivedType(typeof(TroopEntity), typeDiscriminator: "Troop")]
+    [JsonDerivedType(typeof(Tower), typeDiscriminator: "Tower")]
 
     public abstract class AttackEntity(Guid userId, int posX, int posY) : ArenaEntity(userId, posX, posY)
     {
         public int Health { get; set; }
-
-        // Runtime-only reference to the current attack target. Must not be serialized.
-        [JsonIgnore]
         public AttackEntity? CurrentTarget { get; set; }
 
         public virtual void TakeDamage(int damage)

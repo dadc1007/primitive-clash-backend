@@ -71,18 +71,10 @@ namespace PrimitiveClash.Backend.Hubs
 
             try
             {
-                (ArenaEntity entity, Cell cell) = await _battleService.SpawnCard(sessionId, userId, cardId, x, y);
+                await _battleService.SpawnCard(sessionId, userId, cardId, x, y);
 
-                _logger.LogInformation("Spawn successful. Entity ID: {EntityId} at ({X},{Y}). Cell updated.", entity.Id, entity.PosX, entity.PosY);
+                _logger.LogInformation("Spawn successful");
 
-                var spawnDelta = new
-                {
-                    UpdatedEntities = new[] { entity },
-                    UpdatedCells = new[] { cell }
-                };
-
-                await Clients.Group(sessionId.ToString())
-                    .SendAsync("GameSyncDelta", spawnDelta);
             }
             catch (NotEnoughElixirException ex)
             {

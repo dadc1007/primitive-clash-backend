@@ -55,8 +55,6 @@ namespace PrimitiveClash.Backend.Services.Impl
             using var scope = _scopeFactory.CreateScope();
             var _gameService = scope.ServiceProvider.GetRequiredService<IGameService>();
             var _behaviourService = scope.ServiceProvider.GetRequiredService<IBehaviorService>();
-            List<ArenaEntity> changedEntities = [];
-            List<Cell> changedCells = [];
 
             if (!_activeSessions.ContainsKey(sessionId))
             {
@@ -77,7 +75,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 // a) Regenerar Elixir
 
                 // b) Ejecutar Comportamiento de Tropas y Edificios
-                var entities = arena.GetAllEntities().ToList();
+                var entities = arena.GetAttackEntities().ToList();
 
                 _logger.LogDebug("Sesión {SessionId}: Encontradas {EntityCount} entidades para procesar.", sessionId, entities.Count);
 
@@ -85,7 +83,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 {
                     if (entity is TroopEntity troop)
                     {
-                        _behaviourService.ExecuteTroopAction(arena, troop, changedEntities, changedCells);
+                        _behaviourService.ExecuteTroopAction(sessionId, arena, troop);
                     }
                 }
 
@@ -93,21 +91,6 @@ namespace PrimitiveClash.Backend.Services.Impl
                 await _gameService.SaveGame(game);
 
                 _logger.LogDebug("Sesión {SessionId}: Estado guardado en Redis.", sessionId);
-
-                // 4. SINCRONIZACIÓN CON EL CLIENTE (SignalR)
-                if (changedEntities.Count > 0)
-                {
-                    _logger.LogDebug("Sesión {SessionId}: Enviando delta con {EntityCount} entidades actualizadas.", sessionId, changedEntities.Count);
-
-                    var gameDelta = new
-                    {
-                        UpdatedEntities = changedEntities,
-                        UpdatedCells = changedCells
-                    };
-
-                    await _hubContext.Clients.Group(sessionId.ToString())
-                        .SendAsync("GameSyncDelta", gameDelta);
-                }
             }
             catch (Exception ex)
             {

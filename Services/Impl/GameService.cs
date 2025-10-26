@@ -1,6 +1,7 @@
 using System.Text.Json;
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
+using PrimitiveClash.Backend.Models.ArenaEntities;
 using StackExchange.Redis;
 
 namespace PrimitiveClash.Backend.Services.Impl
@@ -50,6 +51,11 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             Game? game = JsonSerializer.Deserialize<Game>(gameJson!)
                 ?? throw new InvalidGameDataException(gameId);
+
+            foreach (var troop in game.GameArena.GetAllTroops())
+            {
+                troop.SyncPathFromSteps();
+            }
 
             return game;
         }
@@ -101,6 +107,12 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         public async Task SaveGame(Game game)
         {
+            foreach (var troop in game.GameArena.GetAllTroops())
+            {
+                troop.SyncStepsFromPath();
+            }
+
+
             string gameJson = JsonSerializer.Serialize(game);
             string key = GetKey(game.Id);
 

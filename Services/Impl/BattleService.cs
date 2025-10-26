@@ -1,17 +1,27 @@
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using PrimitiveClash.Backend.Exceptions;
+using PrimitiveClash.Backend.Hubs;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.ArenaEntities;
+using PrimitiveClash.Backend.Models.Enums;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
-    public class BattleService(IGameService gameService, IArenaService arenaService, ILogger<BattleService> logger) : IBattleService
+    public class BattleService(IGameService gameService, IArenaService arenaService, IHubContext<GameHub> hubContext, ILogger<BattleService> logger) : IBattleService
     {
         private readonly IGameService _gameService = gameService;
         private readonly IArenaService _arenaService = arenaService;
+        private readonly IHubContext<GameHub> _hubContext = hubContext;
         private readonly ILogger<BattleService> _logger = logger;
 
-        public async Task<(ArenaEntity Entity, Cell cell)> SpawnCard(Guid sessionId, Guid userId, Guid cardId, int x, int y)
+        public async Task SpawnCard(Guid sessionId, Guid userId, Guid cardId, int x, int y)
         {
+            _logger.LogInformation("SpawnCard called: sessionId={SessionId}, userId={UserId}, cardId={CardId}, x={X}, y={Y}", sessionId, userId, cardId, x, y);
+
             Game game = await _gameService.GetGame(sessionId);
             PlayerState player = game.PlayerStates.FirstOrDefault(p => p.Id == userId)
                 ?? throw new PlayerNotInGameException(userId);
@@ -19,59 +29,72 @@ namespace PrimitiveClash.Backend.Services.Impl
             PlayerCard card = player.Cards.FirstOrDefault(c => c.Id == cardId)
                 ?? throw new InvalidCardException(cardId);
 
-            _logger.LogDebug("User {UserId} has {Elixir} Elixir. Cost: {Cost}.", userId, player.CurrentElixir, card.Card.ElixirCost);
-
             if (player.CurrentElixir < card.Card.ElixirCost)
             {
+                _logger.LogWarning("Not enough elixir: required={Required}, available={Available}, player={PlayerId}", card.Card.ElixirCost, player.CurrentElixir, player.Id);
                 throw new NotEnoughElixirException(card.Card.ElixirCost, player.CurrentElixir);
             }
 
-            _logger.LogDebug("Calling ArenaService.PlaceEntity at ({X},{Y}).", x, y);
-
-            ArenaEntity entity = _arenaService.PlaceEntity(game.GameArena, player, card, x, y);
-            Cell affectedCell = game.GameArena.Grid[y][x];
-
-            _logger.LogDebug("Entity placed. GroundEntity at ({X},{Y}) is null: {IsNull}", x, y, affectedCell.GroundEntity is null);
-
+            AttackEntity entity = _arenaService.CreateEntity(game.GameArena, player, card, x, y);
             player.CurrentElixir -= card.Card.ElixirCost;
 
-            _logger.LogDebug("Arena: PlayerEntities keys: {Keys}", string.Join(", ", game.GameArena.PlayerEntities.Keys));
-
-            if (game.GameArena.PlayerEntities.TryGetValue(entity.UserId, out var list))
-            {
-                _logger.LogDebug("PlayerEntities count for user {UserId}: {Count}", entity.UserId, list.Count);
-            }
+            _logger.LogInformation("Spawned entity of card {CardId} for player {PlayerId} at ({X},{Y})", cardId, player.Id, x, y);
 
             await _gameService.SaveGame(game);
+            _logger.LogDebug("Game saved after spawning card for session {SessionId}", sessionId);
 
-            _logger.LogDebug("Game state saved to Redis.");
-
-            return (entity, affectedCell);
+            await NotifyPlayers(sessionId, entity);
+            _logger.LogDebug("NotifyPlayers called for session {SessionId} with entity type {Type}", sessionId, entity?.GetType().Name);
         }
 
         public void HandleAttack(AttackEntity attacker, AttackEntity target)
         {
+            _logger.LogInformation("HandleAttack called: attacker={AttackerId}, target={TargetId}", attacker?.Id, target?.Id);
             // Logica de atacar
+            // TODO: agregar logs detallados durante el proceso de ataque (daño, estado, resultados)
         }
 
-        public void HandleMovement(TroopEntity troop, int nextX, int nextY, Arena arena, List<ArenaEntity> changedEntities, List<Cell> changedCells)
+        public async Task HandleMovement(Guid sessionId, TroopEntity troop, Arena arena)
         {
-            Cell oldCell = arena.Grid[troop.PosY][troop.PosX];
+            _logger.LogDebug("HandleMovement called: session={SessionId}, troopId={TroopId}, currentPos=({PosX},{PosY}), pathCount={PathCount}", sessionId, troop?.Id, troop?.PosX, troop?.PosY, troop?.Path.Count);
 
-            arena.RemoveTroop(troop);
-            troop.MoveTo(nextX, nextY);
-            arena.PlaceEntity(troop);
+            if (troop.Path.Count == 0)
+            {
+                _logger.LogDebug("Troop {TroopId} has empty path, skipping movement", troop?.Id);
+                return;
+            }
 
-            Cell newCell = arena.Grid[nextY][nextX];
+            // Record previous position for trace
+            var prevX = troop.PosX;
+            var prevY = troop.PosY;
 
-            changedEntities.Add(troop);
-            changedCells.Add(oldCell);
-            changedCells.Add(newCell);
+            _logger.LogTrace("Removing troop {TroopId} from arena at ({PrevX},{PrevY})", troop?.Id, prevX, prevY);
+            _arenaService.RemoveEntity(arena, troop);
+
+            Point point = troop.Path.Dequeue();
+            troop.PosX = point.X;
+            troop.PosY = point.Y;
+            troop.State = TroopState.Moving;
+
+            _logger.LogTrace("Placing troop {TroopId} to new position ({X},{Y})", troop?.Id, point.X, point.Y);
+            _arenaService.PlaceEntity(arena, troop);
+
+            _logger.LogInformation("Troop {TroopId} moved from ({PrevX},{PrevY}) to ({X},{Y})", troop?.Id, prevX, prevY, point.X, point.Y);
+
+            await NotifyPlayers(sessionId, troop);
         }
 
         public bool CanExecuteMovement(Arena arena, TroopEntity troop, int x, int y)
         {
-            return arena.IsInsideBounds(x, y) && arena.Grid[y][x].IsWalkable(troop);
+            bool result = arena.IsInsideBounds(x, y) && arena.Grid[y][x].IsWalkable(troop);
+            _logger.LogTrace("CanExecuteMovement check: troop={TroopId}, target=({X},{Y}), result={Result}", troop?.Id, x, y, result);
+            return result;
+        }
+
+        private async Task NotifyPlayers(Guid sessionId, object obj)
+        {
+            _logger.LogDebug("NotifyPlayers sending GameSyncDelta to session {SessionId} with payload type {Type}", sessionId, obj?.GetType().Name);
+            await _hubContext.Clients.Group(sessionId.ToString()).SendAsync("GameSyncDelta", obj);
         }
     }
 }

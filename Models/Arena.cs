@@ -14,13 +14,13 @@ namespace PrimitiveClash.Backend.Models
         public ArenaTemplate ArenaTemplate { get; set; }
         public Cell[][] Grid { get; set; }
         public Dictionary<Guid, List<Tower>> Towers { get; set; }
-        public Dictionary<Guid, List<ArenaEntity>> PlayerEntities { get; set; }
+        public Dictionary<Guid, List<AttackEntity>> Entities { get; set; }
 
         public Arena(ArenaTemplate arenaTemplate, Dictionary<Guid, List<Tower>> towers)
         {
             ArenaTemplate = arenaTemplate;
             Towers = towers;
-            PlayerEntities = towers.Keys.ToDictionary(userId => userId, _ => new List<ArenaEntity>());
+            Entities = towers.Keys.ToDictionary(userId => userId, _ => new List<AttackEntity>());
 
             Grid = new Cell[Height][];
             for (int i = 0; i < Height; i++)
@@ -85,27 +85,25 @@ namespace PrimitiveClash.Backend.Models
             var p2Leader = p2Towers.First(t => t.TowerTemplate.Type == TowerType.Leader);
             var p2Guardians = p2Towers.Where(t => t.TowerTemplate.Type == TowerType.Guardian).ToArray();
 
-            PlaceTower(7, 10, 0, 3, p1Leader);
-            PlaceTower(2, 4, 4, 6, p1Guardians[0]);
-            PlaceTower(13, 15, 4, 6, p1Guardians[1]);
+            PlaceTower(7, 1, p1Leader);
+            PlaceTower(2, 4, p1Guardians[0]);
+            PlaceTower(13, 4, p1Guardians[1]);
 
-            PlaceTower(7, 10, 26, 29, p2Leader);
-            PlaceTower(2, 4, 23, 25, p2Guardians[0]);
-            PlaceTower(13, 15, 23, 25, p2Guardians[1]);
+            PlaceTower(7, 25, p2Leader);
+            PlaceTower(2, 23, p2Guardians[0]);
+            PlaceTower(13, 23, p2Guardians[1]);
         }
 
-        private void PlaceTower(int colStart, int colEnd, int rowStart, int rowEnd, Tower tower)
+        private void PlaceTower(int colStart, int rowStart, Tower tower)
         {
-            for (int r = rowStart; r <= rowEnd; r++)
+            tower.PosX = colStart;
+            tower.PosY = rowStart;
+
+            foreach (var (c, r) in tower.GetOccupiedCells())
             {
-                for (int c = colStart; c <= colEnd; c++)
+                if (IsInsideBounds(c, r))
                 {
-                    if (r >= 0 && r < Height && c >= 0 && c < Width)
-                    {
-                        Grid[r][c].Tower = tower;
-                        tower.PosX = c;
-                        tower.PosY = r;
-                    }
+                    Grid[r][c].Tower = true;
                 }
             }
         }
@@ -115,17 +113,17 @@ namespace PrimitiveClash.Backend.Models
             return !(x < 0 || y < 0 || y >= Height || x >= Width);
         }
 
-        public void PlaceEntity(ArenaEntity entity)
+        public void PlaceEntity(AttackEntity entity)
         {
             int x = entity.PosX;
             int y = entity.PosY;
 
             Cell cell = Grid[y][x];
-            bool placed = cell.TryPlaceEntity(entity);
+            bool placed = cell.PlaceEntity(entity);
 
             if (!placed) throw new InvalidSpawnPositionException(x, y);
 
-            if (PlayerEntities.TryGetValue(entity.UserId, out var list))
+            if (Entities.TryGetValue(entity.UserId, out var list))
             {
                 if (!list.Any(e => e.Id == entity.Id))
                 {
@@ -134,35 +132,28 @@ namespace PrimitiveClash.Backend.Models
             }
         }
 
-        public IEnumerable<ArenaEntity> GetAllEntities()
+        public void RemoveEntity(AttackEntity entity)
         {
-            return PlayerEntities.Values.SelectMany(list => list);
+            int x = entity.PosX;
+            int y = entity.PosY;
+
+            Cell cell = Grid[y][x];
+            cell.RemoveEntity(entity);
         }
 
-        public void RemoveTroop(TroopEntity troop)
+        public IEnumerable<ArenaEntity> GetAttackEntities()
         {
-            if (!IsInsideBounds(troop.PosX, troop.PosY))
-                return;
-
-            var cell = Grid[troop.PosY][troop.PosX];
-            var movementType = troop.Card.Card is TroopCard card ? card.MovementType : MovementType.Ground;
-
-            if (movementType == MovementType.Ground)
-                cell.GroundEntity = null;
-            else
-                cell.AirEntity = null;
+            return Entities.Values.SelectMany(list => list);
         }
 
-        public void RemoveTower(Tower tower)
+        public IEnumerable<Tower> GetAllTowers()
         {
-            for (int r = 0; r < Height; r++)
-            {
-                for (int c = 0; c < Width; c++)
-                {
-                    if (Grid[r][c].Tower == tower)
-                        Grid[r][c].Tower = null;
-                }
-            }
+            return Towers.Values.SelectMany(list => list);
+        }
+
+        public IEnumerable<TroopEntity> GetAllTroops()
+        {
+            return GetAttackEntities().OfType<TroopEntity>();
         }
     }
 }

@@ -83,4 +83,9 @@ namespace PrimitiveClash.Backend.Exceptions
     public class PlayerNotInGameException(Guid userId) : GameException($"Player with ID '{userId}' is not in the game.") { }
 
     public class CardTypeException(CardType type) : GameException($"Unsupported card type: {type}") { }
+
+    public class EnemyTowersNotFoundException : GameException
+    {
+        public EnemyTowersNotFoundException() : base("Enemy towers not found") { }
+    }
 }

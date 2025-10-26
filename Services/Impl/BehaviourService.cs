@@ -1,6 +1,7 @@
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.ArenaEntities;
 using PrimitiveClash.Backend.Models.Cards;
+using PrimitiveClash.Backend.Models.Enums;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
@@ -11,80 +12,94 @@ namespace PrimitiveClash.Backend.Services.Impl
         private readonly IPathfindingService _pathFindingService = pathfindingService;
         private readonly ILogger<BehaviourService> _logger = logger;
 
-        public void ExecuteTroopAction(Arena arena, TroopEntity troop, List<ArenaEntity> changedEntities, List<Cell> changedCells)
+        private string FormatPath(IEnumerable<Point> path)
         {
-            if (troop.Card.Card is not TroopCard troopCard) return;
+            if (path == null) return "null";
+            return string.Join(" -> ", path.Select(p => $"({p.X},{p.Y})"));
+        }
 
-            // --- 1. COMPROBACIÓN RÁPIDA DE ATAQUE (Salida Temprana - Prioridad Alta) ---
-            if (troop.CurrentTarget is not null && troop.CurrentTarget.IsAlive())
+        public void ExecuteTroopAction(Guid sessionId, Arena arena, TroopEntity troop)
+        {
+            _logger.LogDebug("Executing troop action: session={SessionId}, troopId={TroopId}, position=({X},{Y}), state={State}",
+                sessionId, troop.Id, troop.PosX, troop.PosY, troop.State);
+
+            var enemies = _arenaService.GetEnemiesInVision(arena, troop);
+            _logger.LogDebug("Found {Count} enemies in vision for troop {TroopId}", enemies.Count(), troop.Id);
+
+            // 1️⃣ Verificar enemigos en visión (otras tropas)
+            if (enemies.Any())
             {
-                double attackDistance = _arenaService.CalculateDistance(troop, troop.CurrentTarget);
+                var nearest = enemies.OrderBy(e => _arenaService.CalculateDistance(troop, e)).First();
+                var distance = _arenaService.CalculateDistance(troop, nearest);
+                double attackRange = (troop.Card.Card as TroopCard)!.Range;
 
-                if (attackDistance <= troopCard.Range)
+                _logger.LogDebug("Nearest enemy for troop {TroopId}: enemyId={EnemyId}, distance={Distance}, enemyPos=({EnemyX},{EnemyY})",
+                    troop.Id, nearest.Id, distance, nearest.PosX, nearest.PosY);
+
+                if (distance <= attackRange)
                 {
-                    // La tropa está en rango y enfrascada. Solo ATACA.
-                    _battleService.HandleAttack(troop, troop.CurrentTarget);
-                    return; // ¡Salida Temprana! NO recalcula ruta ni busca objetivos.
-                }
-            }
+                    _logger.LogInformation("Troop {TroopId} attacking enemy {EnemyId} (distance={Distance}, range={Range})",
+                        troop.Id, nearest.Id, distance, attackRange);
 
-            // --- 2. LÓGICA DE BÚSQUEDA Y RECALCULO DE RUTA ---
-
-            // Buscar el objetivo de MAYOR prioridad: Tropa/Edificio (Visión) O Torre (Global).
-            var (target, distance) = _arenaService.FindClosestTarget(arena, troop, troopCard.VisionRange);
-
-            if (target is null)
-            {
-                _logger.LogWarning("Troop {TroopId} NO encontró objetivo y se detuvo.", troop.Id);
-                troop.CurrentTarget = null;
-                return; // No hay objetivos válidos.
-            }
-
-            _logger.LogDebug("Troop {TroopId} encontró Target {TargetId} (Tipo: {TargetType}) a Distancia: {Distance}.", troop.Id, target.Id, target.GetType().Name, distance);
-
-            // Evaluar si es necesario recalcular la ruta:
-            // 1. El objetivo de mayor prioridad es NUEVO (PathTarget es nulo o diferente).
-            // 2. La ruta actual ha finalizado (Path.Count == 0).
-            bool requiresRecalculation = target != troop.PathTarget || troop.Path.Count == 0;
-
-            troop.CurrentTarget = target; // El objetivo actual es el de mayor prioridad.
-
-            // --- 3. PATHFINDING (Cálculo costoso: Solo si requiresRecalculation es true) ---
-            if (requiresRecalculation)
-            {
-                _logger.LogInformation("Troop {TroopId} RECALCULANDO ruta a ({TargetX},{TargetY}).", troop.Id, troop.CurrentTarget!.PosX, troop.CurrentTarget.PosY);
-
-                // Limpiar y recalcular
-                troop.Path.Clear();
-                troop.PathTarget = troop.CurrentTarget;
-
-                var path = _pathFindingService.FindPath(arena, troop, troop.PosX, troop.PosY, troop.CurrentTarget.PosX, troop.CurrentTarget.PosY);
-                troop.Path = new Queue<(int X, int Y)>(path);
-
-                _logger.LogInformation("Troop {TroopId} PATHFINDING completado. Nodos: {NodeCount}.", troop.Id, troop.Path.Count);
-            }
-
-            // --- 4. MOVIMIENTO (Seguimiento de Ruta Persistente) ---
-            if (troop.Path.Count > 0)
-            {
-                (int nextX, int nextY) = troop.Path.Dequeue(); // Toma un único paso
-
-                // Se añade CanExecuteMovement para verificar bloqueos antes de mover
-                if (_battleService.CanExecuteMovement(arena, troop, nextX, nextY))
-                {
-                    _logger.LogDebug("Troop {TroopId} MOVIÉNDOSE de ({OldX},{OldY}) a ({NewX},{NewY}).", troop.Id, troop.PosX, troop.PosY, nextX, nextY);
-
-                    _battleService.HandleMovement(troop, nextX, nextY, arena, changedEntities, changedCells);
+                    troop.State = TroopState.Attacking;
+                    _battleService.HandleAttack(troop, nearest);
+                    return;
                 }
                 else
                 {
-                    // Movimiento bloqueado: forzar recálculo en el siguiente tick.
-                    _logger.LogWarning("Troop {TroopId} MOVIMIENTO BLOQUEADO a ({X},{Y}). Forzando recálculo.", troop.Id, nextX, nextY);
-
-                    troop.Path.Clear();
-                    troop.PathTarget = null;
+                    MoveTowardsTarget(sessionId, troop, nearest.PosX, nearest.PosY, arena);
+                    return;
                 }
             }
+
+            // 2️⃣ Si no hay enemigos, buscar torre enemiga
+            var tower = _arenaService.GetNearestEnemyTower(arena, troop);
+
+            if (tower == null)
+            {
+                _logger.LogWarning("No enemy tower found for troop {TroopId} in session {SessionId}", troop.Id, sessionId);
+                return;
+            }
+
+            double towerDistance = _arenaService.CalculateDistance(troop, tower);
+            double towerRange = (troop.Card.Card as TroopCard)!.Range;
+
+            // 3️⃣ Si la torre está en rango, atacar
+            if (towerDistance <= towerRange)
+            {
+                _logger.LogInformation("Troop {TroopId} attacking tower {TowerId} (distance={Distance}, range={Range})",
+                    troop.Id, tower.Id, towerDistance, towerRange);
+
+                troop.State = TroopState.Attacking;
+                _battleService.HandleAttack(troop, tower);
+                return;
+            }
+
+            // 4️⃣ Si no está en rango, moverse hacia la torre
+            MoveTowardsTarget(sessionId, troop, tower.PosX, tower.PosY, arena);
+        }
+
+        private void MoveTowardsTarget(Guid sessionId, TroopEntity troop, int targetX, int targetY, Arena arena)
+        {
+            if ((troop.TargetPosition.X, troop.TargetPosition.Y) != (targetX, targetY))
+            {
+                _logger.LogDebug("Troop {TroopId} updating path to target at ({TargetX},{TargetY})",
+                    troop.Id, targetX, targetY);
+
+                troop.TargetPosition = new Point()
+                {
+                    X = targetX,
+                    Y = targetY
+                };
+
+                var path = _pathFindingService.FindPath(arena, troop, troop.PosX, troop.PosY, targetX, targetY);
+                troop.Path = new Queue<Point>(path);
+
+                _logger.LogDebug("New path generated for troop {TroopId}: waypoints={WaypointCount}, path=[{Path}]",
+                    troop.Id, path.Count(), FormatPath(path));
+            }
+
+            _battleService.HandleMovement(sessionId, troop, arena);
         }
     }
 }

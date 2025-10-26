@@ -3,8 +3,8 @@ using PrimitiveClash.Backend.Models.ArenaEntities;
 
 namespace PrimitiveClash.Backend.Services.Factories
 {
-    public interface IArenaEntityFactory
+    public interface IAttackEntityFactory
     {
-        ArenaEntity CreateEntity(PlayerState player, PlayerCard card, int x, int y);
+        AttackEntity CreateEntity(PlayerState player, PlayerCard card, int x, int y);
     }
 }

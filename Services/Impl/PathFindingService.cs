@@ -12,7 +12,7 @@ namespace PrimitiveClash.Backend.Services.Impl
         (1, 1), (1, -1), (-1, 1), (-1, -1) // Diagonales (Coste 14)
         ];
 
-        public List<(int X, int Y)> FindPath(
+        public List<Point> FindPath(
             Arena arena,
             TroopEntity troop,
             int startX, int startY,
@@ -111,16 +111,20 @@ namespace PrimitiveClash.Backend.Services.Impl
         /// <summary>
         /// Reconstruye la ruta desde el nodo final hasta el inicial.
         /// </summary>
-        private static List<(int X, int Y)> RetracePath(PathfindingNode startNode, PathfindingNode endNode)
+        private static List<Point> RetracePath(PathfindingNode startNode, PathfindingNode endNode)
         {
-            var path = new List<(int X, int Y)>();
+            var path = new List<Point>();
             var currentNode = endNode;
 
             // Se detiene antes del nodo inicial, ya que la tropa ya está allí.
             while (currentNode != startNode && currentNode.Parent != null)
             {
                 // Añadir el paso AL INICIO de la lista (para que el orden sea Start -> End)
-                path.Insert(0, (currentNode.X, currentNode.Y));
+                path.Insert(0, new Point()
+                {
+                    X = currentNode.X,
+                    Y = currentNode.Y
+                });
                 currentNode = currentNode.Parent;
             }
 
@@ -146,6 +150,75 @@ namespace PrimitiveClash.Backend.Services.Impl
         private static bool IsAdjacent(int x1, int y1, int x2, int y2)
         {
             return Math.Abs(x1 - x2) <= 1 && Math.Abs(y1 - y2) <= 1;
+        }
+
+        // <summary>
+        /// 🚨 NUEVO MÉTODO 🚨: Encuentra la casilla transitable más cercana al borde de la torre.
+        /// </summary>
+        public Point FindClosestAttackPoint(Arena arena, TroopEntity troop, int sourceX, int sourceY, Tower tower)
+        {
+            // Obtener todas las celdas que rodean a la torre N x N
+            var adjacentPoints = GetAdjacentCells(tower);
+
+            Point? bestPoint = null; ;
+            double minDistance = double.MaxValue;
+
+            foreach (var (x, y) in adjacentPoints)
+            {
+                // 1. Verificar si la celda está dentro de los límites y es transitable
+                // Se usa una nueva TroopEntity() como placeholder para la verificación IsWalkable
+                if (!arena.IsInsideBounds(x, y) || !arena.Grid[y][x].IsWalkable(troop))
+                {
+                    continue;
+                }
+
+                // 2. Calcular la distancia Manhattan para encontrar la más cercana
+                double distance = Math.Abs(sourceX - x) + Math.Abs(sourceY - y);
+
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    bestPoint = new Point()
+                    {
+                        X = x,
+                        Y = y
+                    };
+                }
+            }
+
+            // Si no se encontró ningún punto (lo cual es raro), por defecto al centro de la torre.
+            return bestPoint ?? new Point()
+            {
+                X = tower.PosX,
+                Y = tower.PosY
+            };
+        }
+
+        /// <summary>
+        /// Helper para obtener todas las celdas adyacentes a una estructura N x N.
+        /// </summary>
+        private static IEnumerable<(int X, int Y)> GetAdjacentCells(Tower tower)
+        {
+            var points = new HashSet<(int, int)>();
+            int size = tower.TowerTemplate.Size;
+            int startX = tower.PosX;
+            int startY = tower.PosY;
+            int endX = startX + size - 1;
+            int endY = startY + size - 1;
+
+            // Iterar sobre el perímetro del área de la torre + 1 (para obtener las adyacentes)
+            for (int r = startY - 1; r <= endY + 1; r++)
+            {
+                for (int c = startX - 1; c <= endX + 1; c++)
+                {
+                    // Excluir el área que ocupa la torre
+                    bool insideTower = c >= startX && c <= endX && r >= startY && r <= endY;
+                    if (insideTower) continue;
+
+                    points.Add((c, r));
+                }
+            }
+            return points;
         }
     }
 }
