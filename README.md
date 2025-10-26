@@ -72,4 +72,34 @@ Al levantar la API:
 
 ---
 
+## Tests y Coverage
+
+### Ejecutar todas las pruebas
+
+```bash
+dotnet test primitive-clash-backend.sln
+```
+
+### Ver solo las pruebas que fallan
+
+```powershell
+dotnet test primitive-clash-backend.sln --logger "console;verbosity=normal" | Select-String -Pattern "error TESTERROR|FAIL" -Context 1,0
+```
+
+### Ejecutar pruebas con cobertura de código
+
+```bash
+dotnet test primitive-clash-backend.sln --collect:"XPlat Code Coverage"
+```
+
+### Generar reporte HTML de coverage
+
+```powershell
+.\generate-coverage.ps1
+```
+
+Este script ejecuta las pruebas, genera el reporte de cobertura y abre automáticamente el resultado en el navegador.
+
+---
+
 Con esto, cualquier desarrollador puede levantar el proyecto de forma consistente en su máquina local.
