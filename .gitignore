@@ -37,6 +37,7 @@ App_Data/
 # Env files
 .env
 .env.*
+!.env.example
 
 # ASP.NET environment-specific config files
 appsettings.Development.json

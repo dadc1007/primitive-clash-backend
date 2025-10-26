@@ -29,7 +29,7 @@ namespace PrimitiveClash.Backend.Data
                 .IsUnique();
 
             modelBuilder.Entity<Card>()
-                .HasDiscriminator<string>("CardType")
+                .HasDiscriminator<string>("Discriminator")
                 .HasValue<SpellCard>("Spell")
                 .HasValue<TroopCard>("Troop")
                 .HasValue<BuildingCard>("Building");
@@ -38,11 +38,11 @@ namespace PrimitiveClash.Backend.Data
                 .Property(c => c.Targets)
                 .HasConversion(
                     v => v.Select(e => e.ToString()).ToArray(),
-                    v => v.Select(e => Enum.Parse<CardTarget>(e)).ToList()
+                    v => v.Select(e => Enum.Parse<UnitClass>(e)).ToList()
                 )
                 .HasColumnType("text[]")
                 .Metadata.SetValueComparer(
-                    new ValueComparer<List<CardTarget>>(
+                    new ValueComparer<List<UnitClass>>(
                         (c1, c2) => c1!.OrderBy(e => e).SequenceEqual(c2!.OrderBy(e => e)),
                         c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                         c => c.ToList()

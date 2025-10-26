@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PrimitiveClash.Backend.Data;
@@ -11,9 +12,11 @@ using PrimitiveClash.Backend.Data;
 namespace PrimitiveClash.Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251023194159_SeedInitialCards")]
+    partial class SeedInitialCards
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,9 +158,6 @@ namespace PrimitiveClash.Backend.Migrations
                     b.Property<int>("Range")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Size")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("text");
@@ -234,11 +234,6 @@ namespace PrimitiveClash.Backend.Migrations
                         .ValueGeneratedOnUpdateSometimes()
                         .HasColumnType("integer");
 
-                    b.Property<string>("UnitClass")
-                        .IsRequired()
-                        .ValueGeneratedOnUpdateSometimes()
-                        .HasColumnType("text");
-
                     b.HasDiscriminator().HasValue("Building");
                 });
 
@@ -283,14 +278,6 @@ namespace PrimitiveClash.Backend.Migrations
 
                     b.Property<int>("Range")
                         .ValueGeneratedOnUpdateSometimes()
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UnitClass")
-                        .IsRequired()
-                        .ValueGeneratedOnUpdateSometimes()
-                        .HasColumnType("text");
-
-                    b.Property<int>("VisionRange")
                         .HasColumnType("integer");
 
                     b.HasDiscriminator().HasValue("Troop");

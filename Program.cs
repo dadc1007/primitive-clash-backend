@@ -4,6 +4,8 @@ using PrimitiveClash.Backend.Configuration;
 using PrimitiveClash.Backend.Data;
 using PrimitiveClash.Backend.Hubs;
 using PrimitiveClash.Backend.Services;
+using PrimitiveClash.Backend.Services.Factories;
+using PrimitiveClash.Backend.Services.Factories.Impl;
 using PrimitiveClash.Backend.Services.Impl;
 using StackExchange.Redis;
 
@@ -45,10 +47,20 @@ builder.Services.AddScoped<ITowerTemplateService, TowerTemplateService>();
 builder.Services.AddScoped<ITowerService, TowerService>();
 builder.Services.AddScoped<IArenaTemplateService, ArenaTemplateService>();
 builder.Services.AddScoped<IArenaService, ArenaService>();
+builder.Services.AddScoped<IPathfindingService, PathfindingService>();
+builder.Services.AddScoped<IArenaEntityFactory, ArenaEntityFactory>();
+builder.Services.AddScoped<IBattleService, BattleService>();
+builder.Services.AddScoped<IBehaviorService, BehaviourService>();
 builder.Services.AddScoped<IGameService, GameService>();
+builder.Services.AddSingleton<IGameLoopService, GameLoopService>();
+builder.Services.AddHostedService<GameLoopWorker>();
 
 // SignalR Service
-builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString!);
+builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString!).AddJsonProtocol(options =>
+{
+    options.PayloadSerializerOptions.ReferenceHandler =
+            ReferenceHandler.Preserve;
+});
 builder.Services.AddHostedService<MatchmakingService>();
 builder.Services.AddSingleton<IMatchmakingService, MatchmakingService>();
 
@@ -63,6 +75,30 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        logger.LogInformation("Aplicando migraciones de base de datos...");
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+        DbSeeder.Seed(db);
+        logger.LogInformation("Migraciones aplicadas exitosamente");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error al aplicar migraciones de base de datos");
+
+        if (app.Environment.IsDevelopment())
+        {
+            throw;
+        }
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -75,6 +111,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapHub<MatchmakingHub>("/hubs/matchmaking");
-app.MapHub<GameHub>("/hubs/Game");
+app.MapHub<GameHub>("/hubs/game");
 app.MapControllers();
 app.Run();

@@ -1,6 +1,6 @@
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models.Cards;
-using PrimitiveClash.Backend.Models.Entities;
+using PrimitiveClash.Backend.Models.ArenaEntities;
 using PrimitiveClash.Backend.Models.Enums;
 
 namespace PrimitiveClash.Backend.Models
@@ -14,11 +14,13 @@ namespace PrimitiveClash.Backend.Models
         public ArenaTemplate ArenaTemplate { get; set; }
         public Cell[][] Grid { get; set; }
         public Dictionary<Guid, List<Tower>> Towers { get; set; }
+        public Dictionary<Guid, List<ArenaEntity>> Entities { get; set; }
 
         public Arena(ArenaTemplate arenaTemplate, Dictionary<Guid, List<Tower>> towers)
         {
             ArenaTemplate = arenaTemplate;
             Towers = towers;
+            Entities = towers.Keys.ToDictionary(userId => userId, _ => new List<ArenaEntity>());
 
             Grid = new Cell[Height][];
             for (int i = 0; i < Height; i++)
@@ -83,25 +85,25 @@ namespace PrimitiveClash.Backend.Models
             var p2Leader = p2Towers.First(t => t.TowerTemplate.Type == TowerType.Leader);
             var p2Guardians = p2Towers.Where(t => t.TowerTemplate.Type == TowerType.Guardian).ToArray();
 
-            PlaceTower(7, 10, 0, 3, p1Leader);
-            PlaceTower(2, 4, 4, 6, p1Guardians[0]);
-            PlaceTower(13, 15, 4, 6, p1Guardians[1]);
+            PlaceTower(7, 1, p1Leader);
+            PlaceTower(2, 4, p1Guardians[0]);
+            PlaceTower(13, 4, p1Guardians[1]);
 
-            PlaceTower(7, 10, 26, 29, p2Leader);
-            PlaceTower(2, 4, 23, 25, p2Guardians[0]);
-            PlaceTower(13, 15, 23, 25, p2Guardians[1]);
+            PlaceTower(7, 25, p2Leader);
+            PlaceTower(2, 23, p2Guardians[0]);
+            PlaceTower(13, 23, p2Guardians[1]);
         }
 
-        private void PlaceTower(int colStart, int colEnd, int rowStart, int rowEnd, Tower tower)
+        private void PlaceTower(int colStart, int rowStart, Tower tower)
         {
-            for (int r = rowStart; r <= rowEnd; r++)
+            tower.X = colStart;
+            tower.Y = rowStart;
+
+            foreach (var (c, r) in tower.GetOccupiedCells())
             {
-                for (int c = colStart; c <= colEnd; c++)
+                if (IsInsideBounds(c, r))
                 {
-                    if (r >= 0 && r < Height && c >= 0 && c < Width)
-                    {
-                        Grid[r][c].Tower = tower;
-                    }
+                    Grid[r][c].Tower = true;
                 }
             }
         }
@@ -111,52 +113,47 @@ namespace PrimitiveClash.Backend.Models
             return !(x < 0 || y < 0 || y >= Height || x >= Width);
         }
 
-        public void SpawnEntity(PlayerState player, PlayerCard card, int x, int y)
+        public void PlaceEntity(ArenaEntity entity)
         {
-            if (!IsInsideBounds(x, y))
-                throw new InvalidSpawnPositionException(x, y);
+            int x = entity.X;
+            int y = entity.Y;
 
-            var cell = Grid[y][x];
+            Cell cell = Grid[y][x];
+            bool placed = cell.PlaceEntity(entity);
 
-            var entity = new TroopEntity(player.UserId, card, x, y);
+            if (!placed) throw new InvalidSpawnPositionException(x, y);
 
-            if (!cell.IsWalkable(entity))
-                throw new InvalidSpawnPositionException(x, y);
-
-            if (player.CurrentElixir < card.Card.ElixirCost)
-                throw new NotEnoughElixirException(card.Card.ElixirCost, player.CurrentElixir);
-
-            bool placed = cell.TryPlaceEntity(entity);
-            if (!placed)
-                throw new InvalidSpawnPositionException(x, y);
-
-            player.CurrentElixir -= card.Card.ElixirCost;
-        }
-
-        public void RemoveTroop(TroopEntity troop)
-        {
-            if (!IsInsideBounds(troop.PosX, troop.PosY))
-                return;
-
-            var cell = Grid[troop.PosY][troop.PosX];
-            var movementType = troop.Card.Card is TroopCard card ? card.MovementType : MovementType.Ground;
-
-            if (movementType == MovementType.Ground)
-                cell.GroundEntity = null;
-            else
-                cell.AirEntity = null;
-        }
-
-        public void RemoveTower(Tower tower)
-        {
-            for (int r = 0; r < Height; r++)
+            if (Entities.TryGetValue(entity.UserId, out var list))
             {
-                for (int c = 0; c < Width; c++)
+                if (!list.Any(e => e.Id == entity.Id))
                 {
-                    if (Grid[r][c].Tower == tower)
-                        Grid[r][c].Tower = null;
+                    list.Add(entity);
                 }
             }
+        }
+
+        public void RemoveEntity(ArenaEntity entity)
+        {
+            int x = entity.X;
+            int y = entity.Y;
+
+            Cell cell = Grid[y][x];
+            cell.RemoveEntity(entity);
+        }
+
+        public IEnumerable<ArenaEntity> GetAttackEntities()
+        {
+            return Entities.Values.SelectMany(list => list);
+        }
+
+        public IEnumerable<Tower> GetAllTowers()
+        {
+            return Towers.Values.SelectMany(list => list);
+        }
+
+        public IEnumerable<TroopEntity> GetAllTroops()
+        {
+            return GetAttackEntities().OfType<TroopEntity>();
         }
     }
 }

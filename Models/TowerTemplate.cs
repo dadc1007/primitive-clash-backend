@@ -10,5 +10,6 @@ namespace PrimitiveClash.Backend.Models
         public int Damage { get; set; }
         public int Range { get; set; }
         public required TowerType Type { get; set; }
+        public int Size { get; set; }
     }
 }

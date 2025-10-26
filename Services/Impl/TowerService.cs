@@ -10,14 +10,14 @@ namespace PrimitiveClash.Backend.Services.Impl
         {
             TowerTemplate template = await _towerTemplateService.GetLeaderTowerTemplate();
 
-            return new Tower(template, playerStateId);
+            return new Tower(playerStateId, template);
         }
 
         public async Task<Tower> CreateGuardianTower(Guid playerStateId)
         {
             TowerTemplate template = await _towerTemplateService.GetGuardianTowerTemplate();
 
-            return new Tower(template, playerStateId);
+            return new Tower(playerStateId, template);
         }
 
         public async Task<Dictionary<Guid, List<Tower>>> CreateAllGameTowers(Guid player1StateId, Guid player2StateId)
@@ -27,16 +27,16 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             var p1Towers = new List<Tower>
             {
-                new(leaderTemplate, player1StateId),
-                new(guardianTemplate, player1StateId),
-                new(guardianTemplate, player1StateId)
+                new(player1StateId, leaderTemplate),
+                new(player1StateId, guardianTemplate),
+                new(player1StateId, guardianTemplate)
             };
 
             var p2Towers = new List<Tower>
             {
-                new(leaderTemplate, player2StateId),
-                new(guardianTemplate, player2StateId),
-                new(guardianTemplate, player2StateId)
+                new(player2StateId, leaderTemplate),
+                new(player2StateId, guardianTemplate),
+                new(player2StateId, guardianTemplate)
             };
 
             return new Dictionary<Guid, List<Tower>>

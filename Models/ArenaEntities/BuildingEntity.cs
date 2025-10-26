@@ -1,17 +1,15 @@
 
-namespace PrimitiveClash.Backend.Models.Entities
-{
-    public class BuildingEntity : AttackEntity
-    {
-        public BuildingEntity(Guid userId, PlayerCard card, int posX, int posY) : base(userId, card, posX, posY)
-        {
-        }
+using PrimitiveClash.Backend.Models.Cards;
 
+namespace PrimitiveClash.Backend.Models.ArenaEntities
+{
+    public class BuildingEntity : ArenaEntity
+    {
         public int LeftTime { get; set; }
 
-        public override void Act()
+        public BuildingEntity(Guid userId, PlayerCard playerCard, int x, int y) : base(userId, playerCard, x, y)
         {
-            LeftTime--;
+            Health = (playerCard.Card as BuildingCard)!.Hp;
         }
     }
 }
