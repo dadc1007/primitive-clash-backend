@@ -5,9 +5,6 @@ using PrimitiveClash.Backend.Hubs;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.ArenaEntities;
 using PrimitiveClash.Backend.Models.Enums;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
@@ -35,7 +32,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 throw new NotEnoughElixirException(card.Card.ElixirCost, player.CurrentElixir);
             }
 
-            AttackEntity entity = _arenaService.CreateEntity(game.GameArena, player, card, x, y);
+            ArenaEntity entity = _arenaService.CreateEntity(game.GameArena, player, card, x, y);
             player.CurrentElixir -= card.Card.ElixirCost;
 
             _logger.LogInformation("Spawned entity of card {CardId} for player {PlayerId} at ({X},{Y})", cardId, player.Id, x, y);
@@ -47,7 +44,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             _logger.LogDebug("NotifyPlayers called for session {SessionId} with entity type {Type}", sessionId, entity?.GetType().Name);
         }
 
-        public void HandleAttack(AttackEntity attacker, AttackEntity target)
+        public void HandleAttack(Positioned attacker, Positioned target)
         {
             _logger.LogInformation("HandleAttack called: attacker={AttackerId}, target={TargetId}", attacker?.Id, target?.Id);
             // Logica de atacar
@@ -56,7 +53,7 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         public async Task HandleMovement(Guid sessionId, TroopEntity troop, Arena arena)
         {
-            _logger.LogDebug("HandleMovement called: session={SessionId}, troopId={TroopId}, currentPos=({PosX},{PosY}), pathCount={PathCount}", sessionId, troop?.Id, troop?.PosX, troop?.PosY, troop?.Path.Count);
+            _logger.LogDebug("HandleMovement called: session={SessionId}, troopId={TroopId}, currentPos=({PosX},{PosY}), pathCount={PathCount}", sessionId, troop?.Id, troop?.X, troop?.Y, troop?.Path.Count);
 
             if (troop.Path.Count == 0)
             {
@@ -64,16 +61,15 @@ namespace PrimitiveClash.Backend.Services.Impl
                 return;
             }
 
-            // Record previous position for trace
-            var prevX = troop.PosX;
-            var prevY = troop.PosY;
+            var prevX = troop.X;
+            var prevY = troop.Y;
 
             _logger.LogTrace("Removing troop {TroopId} from arena at ({PrevX},{PrevY})", troop?.Id, prevX, prevY);
             _arenaService.RemoveEntity(arena, troop);
 
             Point point = troop.Path.Dequeue();
-            troop.PosX = point.X;
-            troop.PosY = point.Y;
+            troop.X = point.X;
+            troop.Y = point.Y;
             troop.State = TroopState.Moving;
 
             _logger.LogTrace("Placing troop {TroopId} to new position ({X},{Y})", troop?.Id, point.X, point.Y);

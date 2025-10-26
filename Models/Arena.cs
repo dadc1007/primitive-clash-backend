@@ -14,13 +14,13 @@ namespace PrimitiveClash.Backend.Models
         public ArenaTemplate ArenaTemplate { get; set; }
         public Cell[][] Grid { get; set; }
         public Dictionary<Guid, List<Tower>> Towers { get; set; }
-        public Dictionary<Guid, List<AttackEntity>> Entities { get; set; }
+        public Dictionary<Guid, List<ArenaEntity>> Entities { get; set; }
 
         public Arena(ArenaTemplate arenaTemplate, Dictionary<Guid, List<Tower>> towers)
         {
             ArenaTemplate = arenaTemplate;
             Towers = towers;
-            Entities = towers.Keys.ToDictionary(userId => userId, _ => new List<AttackEntity>());
+            Entities = towers.Keys.ToDictionary(userId => userId, _ => new List<ArenaEntity>());
 
             Grid = new Cell[Height][];
             for (int i = 0; i < Height; i++)
@@ -96,8 +96,8 @@ namespace PrimitiveClash.Backend.Models
 
         private void PlaceTower(int colStart, int rowStart, Tower tower)
         {
-            tower.PosX = colStart;
-            tower.PosY = rowStart;
+            tower.X = colStart;
+            tower.Y = rowStart;
 
             foreach (var (c, r) in tower.GetOccupiedCells())
             {
@@ -113,10 +113,10 @@ namespace PrimitiveClash.Backend.Models
             return !(x < 0 || y < 0 || y >= Height || x >= Width);
         }
 
-        public void PlaceEntity(AttackEntity entity)
+        public void PlaceEntity(ArenaEntity entity)
         {
-            int x = entity.PosX;
-            int y = entity.PosY;
+            int x = entity.X;
+            int y = entity.Y;
 
             Cell cell = Grid[y][x];
             bool placed = cell.PlaceEntity(entity);
@@ -132,10 +132,10 @@ namespace PrimitiveClash.Backend.Models
             }
         }
 
-        public void RemoveEntity(AttackEntity entity)
+        public void RemoveEntity(ArenaEntity entity)
         {
-            int x = entity.PosX;
-            int y = entity.PosY;
+            int x = entity.X;
+            int y = entity.Y;
 
             Cell cell = Grid[y][x];
             cell.RemoveEntity(entity);

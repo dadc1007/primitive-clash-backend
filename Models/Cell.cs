@@ -13,52 +13,54 @@ namespace PrimitiveClash.Backend.Models
         public bool GroundEntity { get; set; } = false;
         public bool AirEntity { get; set; } = false;
 
-        public bool IsWalkable(AttackEntity newEntity)
+        public bool IsWalkable(ArenaEntity newEntity)
         {
             if (Type == CellType.River || Tower)
                 return false;
 
-            var newType = GetMovementType(newEntity);
-
-            return newType switch
-            {
-                MovementType.Ground => GroundEntity is false,
-                MovementType.Air => AirEntity is false,
-                _ => false
-            };
+            return !Collision(newEntity);
         }
 
-        public bool PlaceEntity(AttackEntity newEntity)
+        public bool PlaceEntity(ArenaEntity newEntity)
         {
             if (!IsWalkable(newEntity))
                 return false;
 
-            var type = GetMovementType(newEntity);
-
-            if (type == MovementType.Ground)
-                GroundEntity = true;
-            else if (type == MovementType.Air)
-                AirEntity = true;
+            UpdateEntities(newEntity, true);
 
             return true;
         }
 
-        public void RemoveEntity(AttackEntity newEntity)
+        public void RemoveEntity(ArenaEntity newEntity)
         {
-            var type = GetMovementType(newEntity);
-
-            if (type == MovementType.Ground)
-                GroundEntity = false;
-            else if (type == MovementType.Air)
-                AirEntity = false;
+            UpdateEntities(newEntity, false);
         }
 
-        public static MovementType GetMovementType(AttackEntity entity)
+        public bool Collision(ArenaEntity newEntity)
         {
-            if (entity is TroopEntity troop && troop.Card.Card is TroopCard troopCard)
-                return troopCard.MovementType;
+            AttackCard attackCard = (newEntity.PlayerCard.Card as AttackCard)!;
 
-            return MovementType.Ground;
+            if (attackCard.UnitClass == UnitClass.Ground && GroundEntity)
+            {
+                return true;
+            }
+
+            if (attackCard.UnitClass == UnitClass.Air && AirEntity)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public void UpdateEntities(ArenaEntity entity, bool adding)
+        {
+            AttackCard attackCard = (entity.PlayerCard.Card as AttackCard)!;
+
+            if (attackCard.UnitClass == UnitClass.Ground)
+                GroundEntity = adding;
+            if (attackCard.UnitClass == UnitClass.Air)
+                AirEntity = adding;
         }
     }
 

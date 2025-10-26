@@ -48,7 +48,7 @@ builder.Services.AddScoped<ITowerService, TowerService>();
 builder.Services.AddScoped<IArenaTemplateService, ArenaTemplateService>();
 builder.Services.AddScoped<IArenaService, ArenaService>();
 builder.Services.AddScoped<IPathfindingService, PathfindingService>();
-builder.Services.AddScoped<IAttackEntityFactory, AttackEntityFactory>();
+builder.Services.AddScoped<IArenaEntityFactory, ArenaEntityFactory>();
 builder.Services.AddScoped<IBattleService, BattleService>();
 builder.Services.AddScoped<IBehaviorService, BehaviourService>();
 builder.Services.AddScoped<IGameService, GameService>();

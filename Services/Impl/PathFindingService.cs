@@ -12,14 +12,21 @@ namespace PrimitiveClash.Backend.Services.Impl
         (1, 1), (1, -1), (-1, 1), (-1, -1) // Diagonales (Coste 14)
         ];
 
-        public List<Point> FindPath(
-            Arena arena,
-            TroopEntity troop,
-            int startX, int startY,
-            int targetX, int targetY)
+        public List<Point> FindPath(Arena arena, TroopEntity troop, Positioned target)
         {
-            // Conjunto de nodos a evaluar (Open Set) - Idealmente una Priority Queue para eficiencia.
-            // Aquí se usa una List, por ser más simple en C#, que se ordena en cada iteración.
+            // if (target is Tower tower)
+            // {
+            //     Point nearestPosition = FindClosestAttackPoint(arena, troop, tower);
+
+            //     return CalculatePath(arena, troop, troop.X, troop.Y, nearestPosition.X, nearestPosition.Y);
+            // }
+
+            return CalculatePath(arena, troop, troop.X, troop.Y, target.X, target.Y);
+        }
+
+        private List<Point> CalculatePath(Arena arena, TroopEntity troop, int startX, int startY, int targetX, int targetY)
+        {
+            // Conjunto de nodos a evaluar (Open Set)
             var openSet = new List<PathfindingNode>();
 
             // Conjunto de nodos ya evaluados (Closed Set)
@@ -37,21 +44,21 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             while (openSet.Count > 0)
             {
-                // 1. Obtener el nodo con el menor FCost del Open Set
+                // Obtener el nodo con el menor FCost del Open Set
                 var currentNode = openSet.MinBy(node => node.FCost)
                     ?? throw new InvalidOperationException("Open set empty unexpectedly.");
 
                 openSet.Remove(currentNode);
                 closedSet.Add(currentNode);
 
-                // 2. Comprobar si es el destino
+                // Comprobar si es el destino
                 // Si el nodo actual está adyacente al destino, la ruta ha terminado.
                 if (IsAdjacent(currentNode.X, currentNode.Y, targetX, targetY))
                 {
                     return RetracePath(startNode, currentNode);
                 }
 
-                // 3. Evaluar vecinos
+                // Evaluar vecinos
                 for (int i = 0; i < _directions.Length; i++)
                 {
                     (int dx, int dy) = _directions[i];
@@ -102,7 +109,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             int dstX = Math.Abs(startX - targetX);
             int dstY = Math.Abs(startY - targetY);
 
-            // Distancia Diagonal (preferida para movimientos de 8 direcciones)
+            // Distancia Diagonal
             if (dstX > dstY)
                 return 14 * dstY + 10 * (dstX - dstY);
             return 14 * dstX + 10 * (dstY - dstX);
@@ -119,12 +126,8 @@ namespace PrimitiveClash.Backend.Services.Impl
             // Se detiene antes del nodo inicial, ya que la tropa ya está allí.
             while (currentNode != startNode && currentNode.Parent != null)
             {
-                // Añadir el paso AL INICIO de la lista (para que el orden sea Start -> End)
-                path.Insert(0, new Point()
-                {
-                    X = currentNode.X,
-                    Y = currentNode.Y
-                });
+                // Añadir el paso al inicio de la lista (para que el orden sea Start -> End)
+                path.Insert(0, new Point(currentNode.X, currentNode.Y));
                 currentNode = currentNode.Parent;
             }
 
@@ -153,72 +156,69 @@ namespace PrimitiveClash.Backend.Services.Impl
         }
 
         // <summary>
-        /// 🚨 NUEVO MÉTODO 🚨: Encuentra la casilla transitable más cercana al borde de la torre.
+        /// Encuentra la casilla transitable más cercana al borde de la torre.
         /// </summary>
-        public Point FindClosestAttackPoint(Arena arena, TroopEntity troop, int sourceX, int sourceY, Tower tower)
+        public Point FindClosestAttackPoint(Arena arena, TroopEntity troop, Tower tower)
         {
-            // Obtener todas las celdas que rodean a la torre N x N
-            var adjacentPoints = GetAdjacentCells(tower);
+            int sourceX = troop.X;
+            int sourceY = troop.Y;
 
-            Point? bestPoint = null; ;
+            // Celdas ocupadas por la torre 
+            var occupied = tower.GetOccupiedCells().ToList();
+
+            // Obtener todas las celdas adyacentes al borde de la torre
+            var adjacentPoints = GetAdjacentCellsAroundOccupied(occupied);
+
+            Point? bestPoint = null;
             double minDistance = double.MaxValue;
 
             foreach (var (x, y) in adjacentPoints)
             {
-                // 1. Verificar si la celda está dentro de los límites y es transitable
-                // Se usa una nueva TroopEntity() como placeholder para la verificación IsWalkable
+                // Ignorar si está fuera del mapa o no caminable
                 if (!arena.IsInsideBounds(x, y) || !arena.Grid[y][x].IsWalkable(troop))
-                {
                     continue;
-                }
 
-                // 2. Calcular la distancia Manhattan para encontrar la más cercana
-                double distance = Math.Abs(sourceX - x) + Math.Abs(sourceY - y);
+                // Calcular distancia euclidiana desde la tropa a esta celda
+                double distance = Math.Sqrt(Math.Pow(sourceX - x, 2) + Math.Pow(sourceY - y, 2));
 
                 if (distance < minDistance)
                 {
                     minDistance = distance;
-                    bestPoint = new Point()
-                    {
-                        X = x,
-                        Y = y
-                    };
+                    bestPoint = new Point(x, y);
                 }
             }
 
-            // Si no se encontró ningún punto (lo cual es raro), por defecto al centro de la torre.
-            return bestPoint ?? new Point()
-            {
-                X = tower.PosX,
-                Y = tower.PosY
-            };
+            // Si no hay punto libre, usar la esquina de la torre
+            return bestPoint ?? new Point(tower.X, tower.Y);
         }
 
+
         /// <summary>
-        /// Helper para obtener todas las celdas adyacentes a una estructura N x N.
+        /// Devuelve todas las celdas adyacentes (cardinales y diagonales) al perímetro
         /// </summary>
-        private static IEnumerable<(int X, int Y)> GetAdjacentCells(Tower tower)
+        private static IEnumerable<(int X, int Y)> GetAdjacentCellsAroundOccupied(IEnumerable<(int X, int Y)> occupiedCells)
         {
-            var points = new HashSet<(int, int)>();
-            int size = tower.TowerTemplate.Size;
-            int startX = tower.PosX;
-            int startY = tower.PosY;
-            int endX = startX + size - 1;
-            int endY = startY + size - 1;
+            var adj = new HashSet<(int, int)>();
 
-            // Iterar sobre el perímetro del área de la torre + 1 (para obtener las adyacentes)
-            for (int r = startY - 1; r <= endY + 1; r++)
+            foreach (var (x, y) in occupiedCells)
             {
-                for (int c = startX - 1; c <= endX + 1; c++)
+                for (int dx = -1; dx <= 1; dx++)
                 {
-                    // Excluir el área que ocupa la torre
-                    bool insideTower = c >= startX && c <= endX && r >= startY && r <= endY;
-                    if (insideTower) continue;
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        if (dx == 0 && dy == 0)
+                            continue; // no la celda en sí
 
-                    points.Add((c, r));
+                        adj.Add((x + dx, y + dy));
+                    }
                 }
             }
-            return points;
+
+            // Excluir las que están dentro de la torre
+            foreach (var cell in occupiedCells)
+                adj.Remove(cell);
+
+            return adj;
         }
     }
 }

@@ -1,8 +1,8 @@
 namespace PrimitiveClash.Backend.Models
 {
-    public class Point
+    public class Point(int x, int y)
     {
-        public int X { get; set; }
-        public int Y { get; set; }
+        public int X { get; set; } = x;
+        public int Y { get; set; } = y;
     }
 }

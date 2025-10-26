@@ -6,10 +6,10 @@ using PrimitiveClash.Backend.Services.Factories;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
-    public class ArenaService(IArenaTemplateService arenaTemplateService, IAttackEntityFactory attackEntityFactory) : IArenaService
+    public class ArenaService(IArenaTemplateService arenaTemplateService, IArenaEntityFactory attackEntityFactory) : IArenaService
     {
         private readonly IArenaTemplateService _arenaTemplateService = arenaTemplateService;
-        private readonly IAttackEntityFactory _attackEntityFactory = attackEntityFactory;
+        private readonly IArenaEntityFactory _attackEntityFactory = attackEntityFactory;
 
         public async Task<Arena> CreateArena(Dictionary<Guid, List<Tower>> towers)
         {
@@ -18,34 +18,37 @@ namespace PrimitiveClash.Backend.Services.Impl
             return new Arena(arenaTemplate, towers);
         }
 
-        public AttackEntity CreateEntity(Arena arena, PlayerState player, PlayerCard card, int x, int y)
+        public ArenaEntity CreateEntity(Arena arena, PlayerState player, PlayerCard card, int x, int y)
         {
             if (!arena.IsInsideBounds(x, y)) throw new InvalidSpawnPositionException(x, y);
 
-            AttackEntity entity = _attackEntityFactory.CreateEntity(player, card, x, y);
+            ArenaEntity entity = _attackEntityFactory.CreateEntity(player, card, x, y);
             arena.PlaceEntity(entity);
 
             return entity;
         }
 
-        public void PlaceEntity(Arena arena, AttackEntity entity)
+        public void PlaceEntity(Arena arena, ArenaEntity entity)
         {
             arena.PlaceEntity(entity);
         }
 
-        public void RemoveEntity(Arena arena, AttackEntity entity)
+        public void RemoveEntity(Arena arena, ArenaEntity entity)
         {
             arena.RemoveEntity(entity);
         }
 
-        public double CalculateDistance(AttackEntity sourceEntity, AttackEntity targetEntity)
+        public double CalculateDistance(Positioned sourceEntity, Positioned targetEntity)
         {
-            return Math.Sqrt(Math.Pow(targetEntity.PosX - sourceEntity.PosX, 2) + Math.Pow(targetEntity.PosY - sourceEntity.PosY, 2));
+            int dx = Math.Abs(targetEntity.X - sourceEntity.X);
+            int dy = Math.Abs(targetEntity.Y - sourceEntity.Y);
+
+            return Math.Max(dx, dy);
         }
 
-        public IEnumerable<AttackEntity> GetEnemiesInVision(Arena arena, TroopEntity troop)
+        public IEnumerable<ArenaEntity> GetEnemiesInVision(Arena arena, TroopEntity troop)
         {
-            double vision = (troop.Card.Card as TroopCard)!.VisionRange;
+            double vision = (troop.PlayerCard.Card as TroopCard)!.VisionRange;
 
             foreach (var kvp in arena.Entities)
             {

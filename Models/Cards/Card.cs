@@ -15,6 +15,6 @@ namespace PrimitiveClash.Backend.Models.Cards
         public CardRarity Rarity { get; set; }
         public CardType Type { get; set; }
         public int Damage { get; set; }
-        public required List<CardTarget> Targets { get; set; }
+        public required List<UnitClass> Targets { get; set; }
     }
 }
