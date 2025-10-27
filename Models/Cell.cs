@@ -36,6 +36,11 @@ namespace PrimitiveClash.Backend.Models
             UpdateEntities(newEntity, false);
         }
 
+        public void RemoveTower()
+        {
+            Tower = false;
+        }
+
         public bool Collision(ArenaEntity newEntity)
         {
             AttackCard attackCard = (newEntity.PlayerCard.Card as AttackCard)!;

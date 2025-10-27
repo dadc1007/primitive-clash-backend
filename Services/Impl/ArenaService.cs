@@ -72,5 +72,17 @@ namespace PrimitiveClash.Backend.Services.Impl
                 .OrderBy(t => CalculateDistance(troop, t))
                 .FirstOrDefault() ?? throw new EnemyTowersNotFoundException();
         }
+
+        public void KillPositioned(Arena arena, Positioned positioned)
+        {
+            if (positioned is ArenaEntity arenaEntity)
+            {
+                arena.KillArenaEntity(arenaEntity);
+            }
+            else if (positioned is Tower tower)
+            {
+                arena.KillTower(tower);
+            }
+        }
     }
 }

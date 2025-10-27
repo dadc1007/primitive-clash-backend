@@ -23,18 +23,77 @@ namespace PrimitiveClash.Backend.Services.Impl
             _logger.LogDebug("Executing troop action: session={SessionId}, troopId={TroopId}, position=({X},{Y}), state={State}",
                 sessionId, troop.Id, troop.X, troop.Y, troop.State);
 
-            // Si está atacando, no hace nada (espera a terminar su ataque)
-            if (troop.State == TroopState.Attacking) return;
 
+            // Si está atacando, verifica si su objetivo sigue vivo y en rango
+            if (troop.State == TroopState.Attacking && troop.CurrentTargetId != null)
+            {
+                _logger.LogDebug(
+                    "Troop {TroopId} currently attacking target {TargetId}, CurrentTargetIsTower={IsTower}",
+                    troop.Id, troop.CurrentTargetId, troop.CurrentTargetIsTower);
+
+                IEnumerable<Positioned> candidates = troop.CurrentTargetIsTower
+                    ? arena.GetAllTowers().Cast<Positioned>()
+                    : arena.GetAttackEntities().Cast<Positioned>();
+
+                _logger.LogDebug(
+                    "Candidates count: {Count}, IDs: {Ids}",
+                    candidates.Count(),
+                    string.Join(", ", candidates.Select(c => c.Id))
+                );
+
+                Positioned? currentTarget = candidates.FirstOrDefault(t => t.Id == troop.CurrentTargetId);
+
+                _logger.LogDebug(
+                    "Current target {Id}. Is alive? {IsAlive}",
+                    currentTarget?.Id,
+                    currentTarget?.IsAlive()
+                );
+
+                if (currentTarget != null && currentTarget.IsAlive())
+                {
+                    _logger.LogDebug("Found current target {TargetId} in collection", currentTarget.Id);
+
+                    double distance = _arenaService.CalculateDistance(troop, currentTarget);
+                    double attackRange = (troop.PlayerCard.Card as TroopCard)!.Range;
+
+                    if (distance <= attackRange)
+                    {
+                        _battleService.HandleAttack(sessionId, arena, troop, currentTarget);
+                        _logger.LogInformation(
+                            "Troop {TroopId} continues attacking target {TargetId} (distance={Distance}, range={Range})",
+                            troop.Id, currentTarget.Id, distance, attackRange);
+                        return;
+                    }
+                    else
+                    {
+                        _logger.LogDebug(
+                            "Current target {TargetId} out of range, switching to Idle",
+                            troop.CurrentTargetId);
+                        troop.State = TroopState.Idle;
+                        troop.CurrentTargetId = null;
+                        troop.CurrentTargetPosition = null;
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug(
+                        "Current target {TargetId} is dead or missing, switching to Idle",
+                        troop.CurrentTargetId);
+                    troop.State = TroopState.Idle;
+                    troop.CurrentTargetId = null;
+                    troop.CurrentTargetPosition = null;
+                }
+            }
+
+            // Buscar enemigos visibles
             var enemies = _arenaService.GetEnemiesInVision(arena, troop);
             _logger.LogDebug("Found {Count} enemies in vision for troop {TroopId}", enemies.Count(), troop.Id);
 
-            // Filtrar enemigos que el troop puede atacar segun sus targets
             var validEnemies = enemies
                 .Where(e => troop.PlayerCard.Card.Targets.Contains((e.PlayerCard.Card as AttackCard)!.UnitClass))
                 .ToList();
 
-            // 1️Verificar enemigos en visión (otras tropas)
+            // Verificar enemigos en visión (otras tropas)
             if (validEnemies.Count != 0)
             {
                 var nearest = validEnemies.OrderBy(e => _arenaService.CalculateDistance(troop, e)).First();
@@ -50,7 +109,10 @@ namespace PrimitiveClash.Backend.Services.Impl
                         troop.Id, nearest.Id, distance, attackRange);
 
                     troop.State = TroopState.Attacking;
-                    _battleService.HandleAttack(troop, nearest);
+                    troop.CurrentTargetId = nearest.Id;
+                    troop.CurrentTargetPosition = new Point(nearest.X, nearest.Y);
+                    troop.CurrentTargetIsTower = false;
+                    _battleService.HandleAttack(sessionId, arena, troop, nearest);
                     return;
                 }
                 else
@@ -81,7 +143,10 @@ namespace PrimitiveClash.Backend.Services.Impl
                     troop.Id, tower.Id, towerDistance, towerRange);
 
                 troop.State = TroopState.Attacking;
-                _battleService.HandleAttack(troop, tower);
+                troop.CurrentTargetId = tower.Id;
+                troop.CurrentTargetPosition = new Point(tower.X, tower.Y);
+                troop.CurrentTargetIsTower = true;
+                _battleService.HandleAttack(sessionId, arena, troop, tower);
                 return;
             }
 

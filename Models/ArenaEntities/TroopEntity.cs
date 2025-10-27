@@ -9,7 +9,7 @@ namespace PrimitiveClash.Backend.Models.ArenaEntities
     {
         public TroopState State { get; set; } = TroopState.Idle;
         // Solo para serialización
-        public List<Point> PathSteps { get; set; } = new();
+        public List<Point> PathSteps { get; set; } = [];
         [JsonIgnore]
         public Queue<Point> Path { get; set; } = new();
 

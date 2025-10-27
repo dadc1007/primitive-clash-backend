@@ -44,11 +44,77 @@ namespace PrimitiveClash.Backend.Services.Impl
             _logger.LogDebug("NotifyPlayers called for session {SessionId} with entity type {Type}", sessionId, entity?.GetType().Name);
         }
 
-        public void HandleAttack(Positioned attacker, Positioned target)
+        public void HandleAttack(Guid sessionId, Arena arena, Positioned attacker, Positioned target)
         {
-            _logger.LogInformation("HandleAttack called: attacker={AttackerId}, target={TargetId}", attacker?.Id, target?.Id);
-            // Logica de atacar
-            // TODO: agregar logs detallados durante el proceso de ataque (daño, estado, resultados)
+            _logger.LogInformation(
+                "[{SessionId}] HandleAttack called: attacker={AttackerId} ({AttackerType}), target={TargetId} ({TargetType})",
+                sessionId,
+                attacker?.Id,
+                attacker?.GetType().Name,
+                target?.Id,
+                target?.GetType().Name
+            );
+
+            int damage = 0;
+
+            if (attacker is ArenaEntity arenaEntity)
+            {
+                damage = arenaEntity.PlayerCard.Card.Damage;
+                _logger.LogDebug(
+                    "[{SessionId}] Damage from ArenaEntity {AttackerId} to target {TargetId}: {Damage}",
+                    sessionId,
+                    attacker.Id,
+                    target.Id,
+                    damage
+                );
+            }
+            else if (attacker is Tower tower)
+            {
+                damage = tower.TowerTemplate.Damage;
+                _logger.LogDebug(
+                    "[{SessionId}] Damage from Tower {AttackerId} to target {TargetId}: {Damage}",
+                    sessionId,
+                    attacker.Id,
+                    target.Id,
+                    damage
+                );
+            }
+
+            int oldHealth = target.Health;
+            target.TakeDamage(damage);
+
+            _logger.LogInformation(
+                "[{SessionId}] Target {TargetId} health: {OldHealth} -> {NewHealth}",
+                sessionId,
+                target.Id,
+                oldHealth,
+                target.Health
+            );
+
+            if (!target.IsAlive())
+            {
+                if (target is ArenaEntity entityTarget)
+                {
+                    arena.KillArenaEntity(entityTarget);
+
+                    _logger.LogWarning(
+                        "[{SessionId}] ArenaEntity {TargetId} was killed by {AttackerId}",
+                        sessionId,
+                        target.Id,
+                        attacker.Id
+                    );
+                }
+                else if (target is Tower towerTarget)
+                {
+                    arena.KillTower(towerTarget);
+                    _logger.LogWarning(
+                        "[{SessionId}] Tower {TargetId} was destroyed by {AttackerId}",
+                        sessionId,
+                        target.Id,
+                        attacker.Id
+                    );
+                }
+            }
         }
 
         public async Task HandleMovement(Guid sessionId, TroopEntity troop, Arena arena)

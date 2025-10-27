@@ -2,6 +2,7 @@ using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models.Cards;
 using PrimitiveClash.Backend.Models.ArenaEntities;
 using PrimitiveClash.Backend.Models.Enums;
+using System.Text.Json.Serialization;
 
 namespace PrimitiveClash.Backend.Models
 {
@@ -29,6 +30,16 @@ namespace PrimitiveClash.Backend.Models
             }
 
             InitializeLayout();
+        }
+
+        [JsonConstructor]
+        public Arena(Guid id, ArenaTemplate arenaTemplate, Cell[][] grid, Dictionary<Guid, List<Tower>> towers, Dictionary<Guid, List<ArenaEntity>> entities)
+        {
+            Id = id;
+            ArenaTemplate = arenaTemplate;
+            Grid = grid;
+            Towers = towers;
+            Entities = entities;
         }
 
         private void InitializeLayout()
@@ -134,11 +145,23 @@ namespace PrimitiveClash.Backend.Models
 
         public void RemoveEntity(ArenaEntity entity)
         {
-            int x = entity.X;
-            int y = entity.Y;
+            if (IsInsideBounds(entity.X, entity.Y))
+            {
+                Cell cell = Grid[entity.Y][entity.X];
+                cell.RemoveEntity(entity);
+            }
+        }
 
-            Cell cell = Grid[y][x];
-            cell.RemoveEntity(entity);
+        public void RemoveTower(Tower tower)
+        {
+            foreach (var (X, Y) in tower.GetOccupiedCells())
+            {
+                if (IsInsideBounds(X, Y))
+                {
+                    Cell cell = Grid[Y][X];
+                    cell.RemoveTower();
+                }
+            }
         }
 
         public IEnumerable<ArenaEntity> GetAttackEntities()
@@ -154,6 +177,26 @@ namespace PrimitiveClash.Backend.Models
         public IEnumerable<TroopEntity> GetAllTroops()
         {
             return GetAttackEntities().OfType<TroopEntity>();
+        }
+
+        public void KillArenaEntity(ArenaEntity arenaEntity)
+        {
+            if (Entities.TryGetValue(arenaEntity.UserId, out var list))
+            {
+                list.RemoveAll(e => e.Id == arenaEntity.Id);
+            }
+
+            RemoveEntity(arenaEntity);
+        }
+
+        internal void KillTower(Tower tower)
+        {
+            if (Towers.TryGetValue(tower.UserId, out var list))
+            {
+                list.RemoveAll(t => t.Id == tower.Id);
+            }
+
+            RemoveTower(tower);
         }
     }
 }
