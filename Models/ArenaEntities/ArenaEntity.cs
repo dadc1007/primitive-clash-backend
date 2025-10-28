@@ -9,8 +9,5 @@ namespace PrimitiveClash.Backend.Models.ArenaEntities
     public abstract class ArenaEntity(Guid userId, PlayerCard playerCard, int x, int y) : Positioned(userId, x, y)
     {
         public PlayerCard PlayerCard { get; set; } = playerCard;
-        public Guid? CurrentTargetId { get; set; } = null;
-        public Point? CurrentTargetPosition { get; set; } = null;
-        public bool CurrentTargetIsTower { get; set; } = false;
     }
 }

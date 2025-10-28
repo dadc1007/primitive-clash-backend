@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
-using PrimitiveClash.Backend.Models.ArenaEntities;
 using PrimitiveClash.Backend.Services;
 
 namespace PrimitiveClash.Backend.Hubs
@@ -21,8 +20,7 @@ namespace PrimitiveClash.Backend.Hubs
             {
                 Game game = await _gameService.GetGame(sessionId);
 
-                // Ensure that the user is part of the game
-                if (!game.PlayerStates.Any(p => p.Id == userId))
+                if (game.PlayerStates.All(p => p.Id != userId))
                 {
                     await Clients.Caller.SendAsync("Error", "You are not authorized to join this game session.");
                     return;
@@ -33,10 +31,11 @@ namespace PrimitiveClash.Backend.Hubs
                 Context.Items[SessionIdKey] = sessionId;
                 Context.Items[UserIdKey] = userId;
 
-                Game gameUpdated = await _gameService.UpdatePlayerConnectionStatus(sessionId, userId, Context.ConnectionId, isConnected: true);
+                Game updatedGame =
+                    await _gameService.UpdatePlayerConnectionStatus(sessionId, userId, Context.ConnectionId,
+                        isConnected: true);
 
-                await Clients.Caller.SendAsync("GameSync", gameUpdated);
-                await Clients.Group(sessionId.ToString()).SendAsync("PlayerJoined", userId);
+                await Clients.Caller.SendAsync("GameSync", updatedGame);
             }
             catch (GameNotFoundException)
             {
@@ -44,7 +43,8 @@ namespace PrimitiveClash.Backend.Hubs
             }
             catch (ConcurrencyException)
             {
-                await Clients.Caller.SendAsync("Error", "Failed to join game due to concurrent connection attempt. Please try again.");
+                await Clients.Caller.SendAsync("Error",
+                    "Failed to join game due to concurrent connection attempt. Please try again.");
             }
             catch (Exception)
             {
@@ -59,7 +59,6 @@ namespace PrimitiveClash.Backend.Hubs
             {
                 await _gameService.UpdatePlayerConnectionStatus(
                     sessionId, disconnectedUserId, null, isConnected: false);
-                await Clients.Group(sessionId.ToString()).SendAsync("OpponentDisconnected", disconnectedUserId);
             }
 
             await base.OnDisconnectedAsync(exception);
@@ -67,14 +66,14 @@ namespace PrimitiveClash.Backend.Hubs
 
         public async Task SpawnCard(Guid sessionId, Guid userId, Guid cardId, int x, int y)
         {
-            _logger.LogInformation("Attempting spawn: Session={SessionId}, User={UserId}, Card={CardId}, Pos=({X},{Y})", sessionId, userId, cardId, x, y);
+            _logger.LogInformation("Attempting spawn: Session={SessionId}, User={UserId}, Card={CardId}, Pos=({X},{Y})",
+                sessionId, userId, cardId, x, y);
 
             try
             {
                 await _battleService.SpawnCard(sessionId, userId, cardId, x, y);
 
                 _logger.LogInformation("Spawn successful");
-
             }
             catch (NotEnoughElixirException ex)
             {
@@ -90,7 +89,8 @@ namespace PrimitiveClash.Backend.Hubs
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "SpawnCard failed for Session={SessionId}. Error: {Message}", sessionId, ex.Message);
+                _logger.LogError(ex, "SpawnCard failed for Session={SessionId}. Error: {Message}", sessionId,
+                    ex.Message);
                 await Clients.Caller.SendAsync("Error", $"Unexpected error: {ex.Message}");
             }
         }

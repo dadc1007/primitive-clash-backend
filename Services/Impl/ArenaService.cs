@@ -28,6 +28,16 @@ namespace PrimitiveClash.Backend.Services.Impl
             return entity;
         }
 
+        public List<ArenaEntity> GetEntities(Arena arena)
+        {
+            return arena.GetAttackEntities().Where(e => e.IsAlive()).ToList();
+        }
+
+        public List<Tower> GetTowers(Arena arena)
+        {
+            return arena.GetAllTowers().Where(t => t.IsAlive()).ToList();
+        }
+
         public void PlaceEntity(Arena arena, ArenaEntity entity)
         {
             arena.PlaceEntity(entity);
@@ -46,17 +56,27 @@ namespace PrimitiveClash.Backend.Services.Impl
             return Math.Max(dx, dy);
         }
 
-        public IEnumerable<ArenaEntity> GetEnemiesInVision(Arena arena, TroopEntity troop)
+        public IEnumerable<ArenaEntity> GetEnemiesInVision(Arena arena, Positioned positioned)
         {
-            double vision = (troop.PlayerCard.Card as TroopCard)!.VisionRange;
+            double vision = 0;
+
+            if (positioned is TroopEntity troop)
+            {
+                vision = (troop.PlayerCard.Card as TroopCard)!.VisionRange;
+            }
+
+            if (positioned is Tower tower)
+            {
+                vision = tower.TowerTemplate.Range;
+            }
 
             foreach (var kvp in arena.Entities)
             {
-                if (kvp.Key == troop.UserId) continue;
+                if (kvp.Key == positioned.UserId) continue;
 
                 foreach (var enemy in kvp.Value)
                 {
-                    double distance = CalculateDistance(troop, enemy);
+                    double distance = CalculateDistance(positioned, enemy);
                     if (distance <= vision) yield return enemy;
                 }
             }
@@ -71,6 +91,11 @@ namespace PrimitiveClash.Backend.Services.Impl
             return enemyTowers
                 .OrderBy(t => CalculateDistance(troop, t))
                 .FirstOrDefault() ?? throw new EnemyTowersNotFoundException();
+        }
+
+        public bool CanExecuteMovement(Arena arena, ArenaEntity troop, int x, int y)
+        {
+            return arena.IsInsideBounds(x, y) && arena.Grid[y][x].IsWalkable(troop);
         }
 
         public void KillPositioned(Arena arena, Positioned positioned)

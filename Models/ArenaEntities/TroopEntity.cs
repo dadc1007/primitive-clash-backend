@@ -7,11 +7,11 @@ namespace PrimitiveClash.Backend.Models.ArenaEntities
 {
     public class TroopEntity : ArenaEntity
     {
-        public TroopState State { get; set; } = TroopState.Idle;
         // Solo para serialización
         public List<Point> PathSteps { get; set; } = [];
         [JsonIgnore]
         public Queue<Point> Path { get; set; } = new();
+        public Point TargetPosition { get; set; } = new(0, 0);
 
 
         public TroopEntity(Guid userId, PlayerCard playerCard, int x, int y) : base(userId, playerCard, x, y)
