@@ -76,7 +76,7 @@ namespace PrimitiveClash.Backend.Exceptions
     public class InvalidSpawnPositionException(int x, int y) : GameException($"Cannot spawn unit at position ({x}, {y}). Cell not walkable or occupied.") { }
 
 
-    public class NotEnoughElixirException(float required, float available) : GameException($"Not enough elixir. Required: {required}, available: {available}.") { }
+    public class NotEnoughElixirException(float required, decimal available) : GameException($"Not enough elixir. Required: {required}, available: {available}.") { }
 
     public class InvalidCardException(Guid cardId) : GameException($"Card with ID '{cardId}' is invalid or not in player's hand.") { }
 

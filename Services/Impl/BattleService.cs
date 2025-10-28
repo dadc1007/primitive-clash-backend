@@ -75,6 +75,8 @@ namespace PrimitiveClash.Backend.Services.Impl
                     entity.Y
                 )
             );
+
+            await _notificationService.NotifyNewElixir(player.ConnectionId, player.CurrentElixir);
         }
 
         public async Task HandleAttack(

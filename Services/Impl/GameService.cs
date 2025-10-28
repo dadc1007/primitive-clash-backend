@@ -50,7 +50,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 userIds.Select(u => _redis.SetAddAsync(PlayersInActiveGameSetKey, u.ToString()))
             );
 
-            _gameLoopService.StartGameLoop(sessionId);
+            // _gameLoopService.StartGameLoop(sessionId);
         }
 
         public async Task EndGame(Guid sessionId, Arena arena, Guid winnerId, Guid losserId)
@@ -167,6 +167,25 @@ namespace PrimitiveClash.Backend.Services.Impl
         public async Task<bool> IsUserInGame(Guid userId)
         {
             return await _redis.SetContainsAsync(PlayersInActiveGameSetKey, userId.ToString());
+        }
+
+        public async Task UpdateElixir(Game game)
+        {
+            foreach (
+                PlayerState player in game.PlayerStates.Where(p => p.CurrentElixir < Game.MaxElixir)
+            )
+            {
+                decimal before = player.CurrentElixir;
+                player.CurrentElixir = Math.Min(before + Game.ElixirPerSecond, Game.MaxElixir);
+
+                if (player.CurrentElixir != before)
+                {
+                    await _notificationService.NotifyNewElixir(
+                        player.ConnectionId,
+                        player.CurrentElixir
+                    );
+                }
+            }
         }
 
         private static string GetKey(Guid id)

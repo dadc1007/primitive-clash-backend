@@ -6,8 +6,7 @@ namespace PrimitiveClash.Backend.Models
         public bool IsConnected { get; set; } = true;
         public string? ConnectionId { get; set; }
         public List<PlayerCard> Cards { get; set; } = cards;
-        public float CurrentElixir { get; set; } = 100.0f;
-        public float ElixirPerSecond { get; set; } = 0.5f;
+        public decimal CurrentElixir { get; set; } = 5.0m;
 
         public List<PlayerCard> GetHand()
         {

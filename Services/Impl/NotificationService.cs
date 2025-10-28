@@ -58,11 +58,23 @@ public class NotificationService(IHubContext<GameHub> gameHub, ILogger<Notificat
     public async Task NotifyEndGame(Guid sessionId, EndGameNotification obj)
     {
         await _gameHub.Clients.Group(sessionId.ToString()).SendAsync("EndGame", obj);
-        
+
         _logger.LogDebug(
             "Sent EndGame notification to session {SessionId}: {@Obj}",
             sessionId,
             obj
+        );
+    }
+
+    public async Task NotifyNewElixir(string playerConnectionId, decimal playerCurrentElixir)
+    {
+        await _gameHub
+            .Clients.Client(playerConnectionId)
+            .SendAsync("NewElixir", playerCurrentElixir);
+        _logger.LogDebug(
+            "Sent NewElixir notification to player {PlayerConnectionId}: {PlayerCurrentElixir}",
+            playerConnectionId,
+            playerCurrentElixir
         );
     }
 }
