@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.SignalR;
+using PrimitiveClash.Backend.DTOs.Notifications;
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Services;
+using PrimitiveClash.Backend.Utils.Mappers;
 
 namespace PrimitiveClash.Backend.Hubs
 {
@@ -47,6 +49,15 @@ namespace PrimitiveClash.Backend.Hubs
                 );
 
                 await Clients.Caller.SendAsync("JoinedToGame", updatedGame);
+                await Clients
+                    .Client(Context.ConnectionId)
+                    .SendAsync(
+                        "Hand",
+                        PlayerHandNotificationMapper.ToPlayerHandNotification(
+                            game.GameArena,
+                            _gameService.GetPlayerState(game, userId)
+                        )
+                    );
 
                 StartLoop(updatedGame, sessionId);
             }
