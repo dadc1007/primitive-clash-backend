@@ -1,3 +1,4 @@
+using PrimitiveClash.Backend.DTOs.Notifications;
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.ArenaEntities;
@@ -30,9 +31,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             );
 
             Game game = await _gameService.GetGame(sessionId);
-            PlayerState player =
-                game.PlayerStates.FirstOrDefault(p => p.Id == userId)
-                ?? throw new PlayerNotInGameException(userId);
+            PlayerState player = _gameService.GetPlayerState(game, userId);
             PlayerCard card =
                 player.Cards.FirstOrDefault(c => c.Id == cardId)
                 ?? throw new InvalidCardException(cardId);
@@ -51,6 +50,8 @@ namespace PrimitiveClash.Backend.Services.Impl
             ArenaEntity entity = _arenaService.CreateEntity(game.GameArena, player, card, x, y);
             player.CurrentElixir -= card.Card.ElixirCost;
 
+            player.PlayCard(cardId);
+
             _logger.LogInformation(
                 "Spawned entity of card {CardId} for player {PlayerId} at ({X},{Y})",
                 cardId,
@@ -65,15 +66,17 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             await _notificationService.NotifyCardSpawned(
                 sessionId,
-                CardSpawnedMapper.ToCardSpawnedNotification(
+                new CardSpawnedNotification(
                     entity.Id,
                     entity.UserId,
-                    entity.PlayerCard.Card.Id,
+                    entity.PlayerCard.Id,
                     entity.PlayerCard.Level,
                     entity.X,
-                    entity.Y
+                    entity.Y,
+                    player.GetNextCard().Id
                 )
             );
+            await _notificationService.NotifyNewElixir(player.ConnectionId, player.CurrentElixir);
         }
 
         public async Task HandleAttack(
@@ -108,7 +111,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 attacker.CurrentTargetId = null;
                 attacker.CurrentTargetPosition = null;
                 attacker.State = PositionedState.Idle;
-                
+
                 _arenaService.KillPositioned(arena, target);
                 _logger.LogWarning(
                     "[{SessionId}] {TargetType} {TargetId} was killed by {AttackerId}",
@@ -121,20 +124,18 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             await _notificationService.NotifyUnitDamaged(
                 sessionId,
-                UnitDamagedMapper.ToUnitDamagedNotification(
-                    attacker.Id,
-                    target.Id,
-                    damage,
-                    target.Health
-                )
+                new UnitDamagedNotification(attacker.Id, target.Id, damage, target.Health)
             );
 
             if (died)
             {
                 await _notificationService.NotifyUnitKilled(
                     sessionId,
-                    UnitKilledMapper.ToUnitKilledNotificacion(attacker.Id, target.Id)
+                    new UnitKilledNotificacion(attacker.Id, target.Id)
                 );
+
+                if (target is Tower)
+                    await _gameService.EndGame(sessionId, arena, attacker.UserId, target.UserId);
             }
         }
 
@@ -178,7 +179,7 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             await _notificationService.NotifyTroopMoved(
                 sessionId,
-                TroopMovedMapper.ToTroopMovedNotification(
+                new TroopMovedNotification(
                     troop.Id,
                     troop.UserId,
                     troop.X,

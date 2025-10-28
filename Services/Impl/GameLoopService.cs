@@ -81,6 +81,8 @@ namespace PrimitiveClash.Backend.Services.Impl
                     behaviourService.ExecuteAction(sessionId, arena, tower);
                 }
 
+                gameService.UpdateElixir(game);
+
                 // 3. Persistir estado
                 await gameService.SaveGame(game);
 

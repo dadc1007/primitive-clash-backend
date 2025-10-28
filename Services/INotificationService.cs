@@ -5,8 +5,10 @@ namespace PrimitiveClash.Backend.Services;
 
 public interface INotificationService
 {
-    Task NotifyCardSpawned(Guid sessionId, CardSpawnedNotification notification);
-    Task NotifyTroopMoved(Guid sessionId, TroopMovedNotification notification);
-    Task NotifyUnitDamaged(Guid sessionId, UnitDamagedNotification notification);
-    Task NotifyUnitKilled(Guid sessionId, UnitKilledNotificacion unitDamagedNotification);
+    Task NotifyCardSpawned(Guid sessionId, CardSpawnedNotification obj);
+    Task NotifyTroopMoved(Guid sessionId, TroopMovedNotification obj);
+    Task NotifyUnitDamaged(Guid sessionId, UnitDamagedNotification obj);
+    Task NotifyUnitKilled(Guid sessionId, UnitKilledNotificacion obj);
+    Task NotifyEndGame(Guid sessionId, EndGameNotification obj);
+    Task NotifyNewElixir(string playerConnectionId, decimal playerCurrentElixir);
 }

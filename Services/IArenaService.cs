@@ -16,5 +16,6 @@ namespace PrimitiveClash.Backend.Services
         Tower GetNearestEnemyTower(Arena arena, TroopEntity troop);
         bool CanExecuteMovement(Arena arena, ArenaEntity troop, int x, int y);
         void KillPositioned(Arena arena, Positioned positioned);
+        (int towersWinner, int towersLosser) GetNumberTowers(Arena arena, Guid winnerId, Guid losserId);
     }
 }
