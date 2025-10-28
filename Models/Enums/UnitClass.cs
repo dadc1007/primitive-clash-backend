@@ -1,6 +1,6 @@
 namespace PrimitiveClash.Backend.Models.Enums
 {
-    public enum CardTarget
+    public enum UnitClass
     {
         Ground,
         Air,

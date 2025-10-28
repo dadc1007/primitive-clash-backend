@@ -155,6 +155,9 @@ namespace PrimitiveClash.Backend.Migrations
                     b.Property<int>("Range")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Size")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("text");
@@ -231,6 +234,11 @@ namespace PrimitiveClash.Backend.Migrations
                         .ValueGeneratedOnUpdateSometimes()
                         .HasColumnType("integer");
 
+                    b.Property<string>("UnitClass")
+                        .IsRequired()
+                        .ValueGeneratedOnUpdateSometimes()
+                        .HasColumnType("text");
+
                     b.HasDiscriminator().HasValue("Building");
                 });
 
@@ -275,6 +283,14 @@ namespace PrimitiveClash.Backend.Migrations
 
                     b.Property<int>("Range")
                         .ValueGeneratedOnUpdateSometimes()
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UnitClass")
+                        .IsRequired()
+                        .ValueGeneratedOnUpdateSometimes()
+                        .HasColumnType("text");
+
+                    b.Property<int>("VisionRange")
                         .HasColumnType("integer");
 
                     b.HasDiscriminator().HasValue("Troop");

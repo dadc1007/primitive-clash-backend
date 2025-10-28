@@ -8,5 +8,6 @@ namespace PrimitiveClash.Backend.Services
         Task<Game> GetGame(Guid gameId);
         Task<Game> UpdatePlayerConnectionStatus(Guid sessionId, Guid userId, string? connectionId, bool isConnected);
         Task<bool> IsUserInGame(Guid userId);
+        Task SaveGame(Game game);
     }
 }

@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="PrimitiveClash.Backend.Tests/**" />
+    <Content Remove="PrimitiveClash.Backend.Tests/**" />
+    <EmbeddedResource Remove="PrimitiveClash.Backend.Tests/**" />
+    <None Remove="PrimitiveClash.Backend.Tests/**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="9.0.9" />

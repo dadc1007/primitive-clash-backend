@@ -31,8 +31,8 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         public async Task EnqueuePlayer(Guid userId, string connectionId)
         {
-            using var scope = _scopeFactory.CreateScope();
-            var gameService = scope.ServiceProvider.GetRequiredService<IGameService>();
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            IGameService gameService = scope.ServiceProvider.GetRequiredService<IGameService>();
 
             if (await gameService.IsUserInGame(userId))
             {
@@ -92,10 +92,10 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         private async Task TryMatchPlayers()
         {
-            var (player1, player1Json) = await PopAndDeserializeAsync();
+            (PlayerQueueItem? player1, RedisValue player1Json) = await PopAndDeserializeAsync();
             if (player1 is null) return;
 
-            var (player2, player2Json) = await PopAndDeserializeAsync();
+            (PlayerQueueItem? player2, RedisValue player2Json) = await PopAndDeserializeAsync();
             if (player2 is null)
             {
                 await _redis.ListLeftPushAsync(MatchmakingQueueKey, player1Json);
@@ -104,7 +104,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             }
 
             _logger.LogInformation("Attempting to match players {Player1Id} and {Player2Id}.", player1.UserId, player2.UserId);
-            var activeStatus = await CheckPlayerActivityAsync(player1, player2);
+            (bool player1Active, bool player2Active) activeStatus = await CheckPlayerActivityAsync(player1, player2);
 
             if (!activeStatus.player1Active || !activeStatus.player2Active)
             {
@@ -123,13 +123,12 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             PlayerQueueItem? player = JsonSerializer.Deserialize<PlayerQueueItem>(json.ToString());
 
-            if (player is null)
-            {
-                _logger.LogWarning("Corrupt or invalid data found in the matchmaking queue. Json discarded: {Json}", json.ToString());
-                return (null, RedisValue.Null);
-            }
+            if (player is not null) return (player, json);
+            
+            _logger.LogWarning("Corrupt or invalid data found in the matchmaking queue. Json discarded: {Json}", json.ToString());
+            
+            return (null, RedisValue.Null);
 
-            return (player, json);
         }
 
         private async Task<(bool player1Active, bool player2Active)> CheckPlayerActivityAsync(
@@ -163,8 +162,8 @@ namespace PrimitiveClash.Backend.Services.Impl
             _logger.LogInformation("Match finalized. Session ID: {SessionId} between {Player1Id} and {Player2Id}.",
                 sessionId, player1.UserId, player2.UserId);
 
-            using var scope = _scopeFactory.CreateScope();
-            var gameService = scope.ServiceProvider.GetRequiredService<IGameService>();
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            IGameService gameService = scope.ServiceProvider.GetRequiredService<IGameService>();
 
             try
             {
