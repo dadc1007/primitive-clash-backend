@@ -49,8 +49,6 @@ namespace PrimitiveClash.Backend.Services.Impl
             await Task.WhenAll(
                 userIds.Select(u => _redis.SetAddAsync(PlayersInActiveGameSetKey, u.ToString()))
             );
-
-            // _gameLoopService.StartGameLoop(sessionId);
         }
 
         public async Task EndGame(Guid sessionId, Arena arena, Guid winnerId, Guid losserId)
@@ -186,6 +184,12 @@ namespace PrimitiveClash.Backend.Services.Impl
                     );
                 }
             }
+        }
+
+        public PlayerState GetPlayerState(Game game, Guid userId)
+        {
+            return game.PlayerStates.FirstOrDefault(ps => ps.Id == userId)
+                ?? throw new PlayerNotInGameException(userId);
         }
 
         private static string GetKey(Guid id)

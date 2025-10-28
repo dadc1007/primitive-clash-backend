@@ -31,9 +31,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             );
 
             Game game = await _gameService.GetGame(sessionId);
-            PlayerState player =
-                game.PlayerStates.FirstOrDefault(p => p.Id == userId)
-                ?? throw new PlayerNotInGameException(userId);
+            PlayerState player = _gameService.GetPlayerState(game, userId);
             PlayerCard card =
                 player.Cards.FirstOrDefault(c => c.Id == cardId)
                 ?? throw new InvalidCardException(cardId);
@@ -52,6 +50,8 @@ namespace PrimitiveClash.Backend.Services.Impl
             ArenaEntity entity = _arenaService.CreateEntity(game.GameArena, player, card, x, y);
             player.CurrentElixir -= card.Card.ElixirCost;
 
+            player.PlayCard(cardId);
+
             _logger.LogInformation(
                 "Spawned entity of card {CardId} for player {PlayerId} at ({X},{Y})",
                 cardId,
@@ -69,13 +69,13 @@ namespace PrimitiveClash.Backend.Services.Impl
                 new CardSpawnedNotification(
                     entity.Id,
                     entity.UserId,
-                    entity.PlayerCard.Card.Id,
+                    entity.PlayerCard.Id,
                     entity.PlayerCard.Level,
                     entity.X,
-                    entity.Y
+                    entity.Y,
+                    player.GetNextCard().Id
                 )
             );
-
             await _notificationService.NotifyNewElixir(player.ConnectionId, player.CurrentElixir);
         }
 

@@ -32,6 +32,9 @@ namespace PrimitiveClash.Backend.Services.Impl
             if (!arena.IsInsideBounds(x, y))
                 throw new InvalidSpawnPositionException(x, y);
 
+            if (!IsValidSide(arena, player.Id, y))
+                throw new InvalidArenaSideException();
+
             ArenaEntity entity = _attackEntityFactory.CreateEntity(player, card, x, y);
             arena.PlaceEntity(entity);
 
@@ -118,12 +121,31 @@ namespace PrimitiveClash.Backend.Services.Impl
             }
         }
 
-        public (int towersWinner, int towersLosser) GetNumberTowers(Arena arena, Guid winnerId, Guid losserId)
+        public (int towersWinner, int towersLosser) GetNumberTowers(
+            Arena arena,
+            Guid winnerId,
+            Guid losserId
+        )
         {
             int towersWinner = arena.Towers[winnerId].Count(t => t.IsAlive());
             int towersLosser = arena.Towers[losserId].Count(t => t.IsAlive());
-            
+
             return (towersWinner, towersLosser);
+        }
+
+        private static bool IsValidSide(Arena arena, Guid playerId, int y)
+        {
+            List<Guid> playerIds = arena.Towers.Keys.ToList();
+            Guid player1 = playerIds[0];
+            Guid player2 = playerIds[1];
+
+            if (playerId == player1 && y > 13)
+                return false;
+
+            if (playerId == player2 && y < 16)
+                return false;
+
+            return true;
         }
     }
 }

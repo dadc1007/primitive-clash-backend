@@ -1,3 +1,5 @@
+using PrimitiveClash.Backend.Exceptions;
+
 namespace PrimitiveClash.Backend.Models
 {
     public class PlayerState(Guid id, List<PlayerCard> cards)
@@ -7,6 +9,15 @@ namespace PrimitiveClash.Backend.Models
         public string? ConnectionId { get; set; }
         public List<PlayerCard> Cards { get; set; } = cards;
         public decimal CurrentElixir { get; set; } = 5.0m;
+
+        public void PlayCard(Guid cardId)
+        {
+            List<PlayerCard> hand = GetHand();
+            PlayerCard cardPlayed =
+                hand.Find(c => c.Id == cardId) ?? throw new CardNotInHandException();
+            Cards.Remove(cardPlayed);
+            Cards.Add(cardPlayed);
+        }
 
         public List<PlayerCard> GetHand()
         {

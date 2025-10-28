@@ -11,5 +11,6 @@ namespace PrimitiveClash.Backend.Services
         Task<Game> UpdatePlayerConnectionStatus(Guid sessionId, Guid userId, string? connectionId, bool isConnected);
         Task<bool> IsUserInGame(Guid userId);
         Task UpdateElixir(Game game);
+        PlayerState GetPlayerState(Game game, Guid userId);
     }
 }
