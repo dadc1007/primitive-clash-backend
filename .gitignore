@@ -37,6 +37,7 @@ App_Data/
 # Env files
 .env
 .env.*
+!.env.example
 
 # ASP.NET environment-specific config files
 appsettings.Development.json
@@ -45,6 +46,13 @@ appsettings.Production.json
 
 # Visual Studio debug profiles
 Properties/launchSettings.json
+
+# Test Results and Coverage
+TestResults/
+**/TestResults/
+coverage/
+*.coverage
+*.coveragexml
 
 # OS Specific
 # Windows
@@ -56,3 +64,8 @@ Desktop.ini
 
 # Linux
 *~
+
+# =====================
+# JetBrains Rider / IDE Files
+# =====================
+.idea/
