@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using PrimitiveClash.Backend.Models.Enums;
 
 namespace PrimitiveClash.Backend.Models.ArenaEntities
 {
@@ -10,7 +11,10 @@ namespace PrimitiveClash.Backend.Models.ArenaEntities
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid UserId { get; set; } = userId;
         public int Health { get; set; }
-        public Point TargetPosition { get; set; } = new(0, 0);
+        public PositionedState State { get; set; } = PositionedState.Idle;
+        public Guid? CurrentTargetId { get; set; } = null;
+        public Point? CurrentTargetPosition { get; set; } = null;
+        public bool CurrentTargetIsTower { get; set; } = false;
 
         public void TakeDamage(int damage)
         {

@@ -12,81 +12,131 @@ namespace PrimitiveClash.Backend.Services.Impl
         private readonly IPathfindingService _pathFindingService = pathfindingService;
         private readonly ILogger<BehaviourService> _logger = logger;
 
-        private string FormatPath(IEnumerable<Point> path)
+        public void ExecuteAction(Guid sessionId, Arena arena, Positioned unit)
         {
-            if (path == null) return "null";
-            return string.Join(" -> ", path.Select(p => $"({p.X},{p.Y})"));
-        }
+            _logger.LogDebug(
+                "Executing action: session={SessionId}, unitId={UnitId}, position=({X},{Y}), state={State}",
+                sessionId, unit.Id, unit.X, unit.Y, unit is TroopEntity t ? t.State.ToString() : "Tower"
+            );
 
-        public void ExecuteTroopAction(Guid sessionId, Arena arena, TroopEntity troop)
-        {
-            _logger.LogDebug("Executing troop action: session={SessionId}, troopId={TroopId}, position=({X},{Y}), state={State}",
-                sessionId, troop.Id, troop.X, troop.Y, troop.State);
-
-            // Si está atacando, no hace nada (espera a terminar su ataque)
-            if (troop.State == TroopState.Attacking) return;
-
-            var enemies = _arenaService.GetEnemiesInVision(arena, troop);
-            _logger.LogDebug("Found {Count} enemies in vision for troop {TroopId}", enemies.Count(), troop.Id);
-
-            // Filtrar enemigos que el troop puede atacar segun sus targets
-            var validEnemies = enemies
-                .Where(e => troop.PlayerCard.Card.Targets.Contains((e.PlayerCard.Card as AttackCard)!.UnitClass))
-                .ToList();
-
-            // 1️Verificar enemigos en visión (otras tropas)
-            if (validEnemies.Count != 0)
+            if (!unit.IsAlive())
             {
-                var nearest = validEnemies.OrderBy(e => _arenaService.CalculateDistance(troop, e)).First();
-                var distance = _arenaService.CalculateDistance(troop, nearest);
-                double attackRange = (troop.PlayerCard.Card as TroopCard)!.Range;
+                _logger.LogDebug("UnitId={UnitId} was destruyed", unit.Id);
 
-                _logger.LogDebug("Nearest enemy for troop {TroopId}: enemyId={EnemyId}, distance={Distance}, enemyPos=({EnemyX},{EnemyY})",
-                    troop.Id, nearest.Id, distance, nearest.X, nearest.Y);
-
-                if (distance <= attackRange)
-                {
-                    _logger.LogInformation("Troop {TroopId} attacking enemy {EnemyId} (distance={Distance}, range={Range})",
-                        troop.Id, nearest.Id, distance, attackRange);
-
-                    troop.State = TroopState.Attacking;
-                    _battleService.HandleAttack(troop, nearest);
-                    return;
-                }
-                else
-                {
-                    MoveTowardsTarget(sessionId, arena, troop, nearest);
-                    return;
-                }
+                return;
             }
 
-            // Si no hay enemigos, buscar torre enemiga
-            var tower = _arenaService.GetNearestEnemyTower(arena, troop);
+            if (TryContinueCurrentAttack(sessionId, arena, unit))
+                return;
 
+            switch (unit)
+            {
+                case TroopEntity troop:
+                    if (TryAttackVisibleEnemies(sessionId, arena, troop)) return;
+                    TryAttackOrMoveToTower(sessionId, arena, troop);
+                    break;
+
+                case Tower tower:
+                    TryAttackNearestEnemyInRange(sessionId, arena, tower);
+                    break;
+            }
+        }
+
+        private bool TryContinueCurrentAttack(Guid sessionId, Arena arena, Positioned attacker)
+        {
+            if (attacker.CurrentTargetId == null) return false;
+
+            Positioned? currentTarget = GetCurrentTarget(attacker.CurrentTargetId.Value, attacker.CurrentTargetIsTower, arena);
+            if (currentTarget == null || !currentTarget.IsAlive())
+            {
+                _logger.LogDebug("Current target {TargetId} is dead or missing, switching to Idle", attacker.CurrentTargetId);
+
+                attacker.State = PositionedState.Idle;
+                attacker.CurrentTargetId = null;
+                attacker.CurrentTargetPosition = null;
+                return false;
+            }
+
+            double range = attacker switch
+            {
+                TroopEntity t => (t.PlayerCard.Card as TroopCard)!.Range,
+                Tower tow => tow.TowerTemplate.Range,
+                _ => 0
+            };
+
+            return TryAttackTargetIfInRange(sessionId, attacker, currentTarget, range, arena);
+        }
+
+        private bool TryAttackTargetIfInRange(Guid sessionId, Positioned attacker, Positioned target, double range, Arena arena)
+        {
+            double distance = _arenaService.CalculateDistance(attacker, target);
+            if (distance > range) return false;
+
+            _battleService.HandleAttack(sessionId, arena, attacker, target);
+            _logger.LogInformation(
+                "{AttackerType} {AttackerId} attacked target {TargetId} (distance={Distance}, range={Range})",
+                attacker.GetType().Name, attacker.Id, target.Id, distance, range
+            );
+
+            return true;
+        }
+
+        private Positioned? GetCurrentTarget(Guid targetId, bool isTower, Arena arena)
+        {
+            IEnumerable<Positioned> candidates = isTower
+                ? _arenaService.GetTowers(arena)
+                : _arenaService.GetEntities(arena);
+
+            return candidates.FirstOrDefault(t => t.Id == targetId);
+        }
+
+        private bool TryAttackVisibleEnemies(Guid sessionId, Arena arena, TroopEntity troop)
+        {
+            List<ArenaEntity> enemies = _arenaService.GetEnemiesInVision(arena, troop)
+             .Where(e => troop.PlayerCard.Card.Targets.Contains((e.PlayerCard.Card as AttackCard)!.UnitClass))
+             .ToList();
+
+            _logger.LogDebug("Found {Count} enemies in vision for troop {TroopId}", enemies.Count, troop.Id);
+
+            if (enemies.Count == 0) return false;
+
+            ArenaEntity nearest = enemies.OrderBy(e => _arenaService.CalculateDistance(troop, e)).First();
+            double range = (troop.PlayerCard.Card as TroopCard)!.Range;
+
+            if (!TryAttackTargetIfInRange(sessionId, troop, nearest, range, arena))
+                MoveTowardsTarget(sessionId, arena, troop, nearest);
+
+            return true;
+        }
+
+        private void TryAttackOrMoveToTower(Guid sessionId, Arena arena, TroopEntity troop)
+        {
+            Tower? tower = _arenaService.GetNearestEnemyTower(arena, troop);
             if (tower == null)
             {
                 _logger.LogWarning("No enemy tower found for troop {TroopId} in session {SessionId}", troop.Id, sessionId);
                 return;
             }
 
-            double towerDistance = _arenaService.CalculateDistance(troop, tower);
-            double towerRange = (troop.PlayerCard.Card as TroopCard)!.Range;
+            double range = (troop.PlayerCard.Card as TroopCard)!.Range;
+            
+            if (TryAttackTargetIfInRange(sessionId, troop, tower, range, arena)) return;
+            
             _logger.LogInformation("Troop {TroopId} moving to {TowerId} (distance={Distance}, range={Range})",
-                    troop.Id, tower.Id, towerDistance, towerRange);
+                troop.Id, tower.Id, _arenaService.CalculateDistance(troop, tower), range);
 
-            // 3️Si la torre está en rango, atacar
-            if (towerDistance <= towerRange)
-            {
-                _logger.LogInformation("Troop {TroopId} attacking tower {TowerId} (distance={Distance}, range={Range})",
-                    troop.Id, tower.Id, towerDistance, towerRange);
-
-                troop.State = TroopState.Attacking;
-                _battleService.HandleAttack(troop, tower);
-                return;
-            }
-
-            // Si no está en rango, moverse hacia la torre
             MoveTowardsTarget(sessionId, arena, troop, tower);
+        }
+
+        private void TryAttackNearestEnemyInRange(Guid sessionId, Arena arena, Tower tower)
+        {
+            IEnumerable<ArenaEntity> enemies = _arenaService.GetEnemiesInVision(arena, tower).ToList();
+            if (!enemies.Any()) return;
+
+            ArenaEntity nearest = enemies.OrderBy(e => _arenaService.CalculateDistance(tower, e)).First();
+            double range = tower.TowerTemplate.Range;
+
+            TryAttackTargetIfInRange(sessionId, tower, nearest, range, arena);
         }
 
         private void MoveTowardsTarget(Guid sessionId, Arena arena, TroopEntity troop, Positioned target)
@@ -100,15 +150,34 @@ namespace PrimitiveClash.Backend.Services.Impl
                     troop.Id, targetX, targetY);
 
                 troop.TargetPosition = new Point(targetX, targetY);
-
-                var path = _pathFindingService.FindPath(arena, troop, target);
+                List<Point> path = _pathFindingService.FindPath(arena, troop, target);
                 troop.Path = new Queue<Point>(path);
 
                 _logger.LogDebug("New path generated for troop {TroopId}: waypoints={WaypointCount}, path=[{Path}]",
-                    troop.Id, path.Count(), FormatPath(path));
+                    troop.Id, path.Count, FormatPath(path));
             }
+            
+            if (troop.Path.Count > 0)
+            {
+                Point next = troop.Path.Peek();
+                
+                if (!_arenaService.CanExecuteMovement(arena, troop, next.X, next.Y))
+                {
+                    _logger.LogDebug("Troop {TroopId} found next cell blocked, recalculating path...", troop.Id);
+
+                    List<Point> newPath = _pathFindingService.FindPath(arena, troop, target);
+                    troop.Path = new Queue<Point>(newPath);
+
+                    _logger.LogDebug("Recalculated path for troop {TroopId}: waypoints={WaypointCount}, path=[{Path}]",
+                        troop.Id, newPath.Count, FormatPath(newPath));
+                }
+            }
+
 
             _battleService.HandleMovement(sessionId, troop, arena);
         }
+
+        private static string FormatPath(IEnumerable<Point> path) => string.Join("->", path.Select(p => $"({p.X},{p.Y})"));
+
     }
 }

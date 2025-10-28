@@ -5,7 +5,6 @@ namespace PrimitiveClash.Backend.Services.Impl
         private readonly IServiceProvider _serviceProvider = serviceProvider;
         private Timer? _timer = null;
 
-        // 20 Ticks por segundo
         private const int TickIntervalMs = 5000;
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -16,12 +15,9 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         private async void DoWork(object? state)
         {
-            // Se crea un scope para resolver el GameLoopService, necesario en IHostedService
-            using var scope = _serviceProvider.CreateScope();
-            // Usamos GetRequiredService para asegurar que la dependencia exista
-            var gameLoopService = scope.ServiceProvider.GetRequiredService<IGameLoopService>();
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            IGameLoopService gameLoopService = scope.ServiceProvider.GetRequiredService<IGameLoopService>();
 
-            // Llama al método de procesamiento paralelo de todos los juegos
             await gameLoopService.ProcessTick();
         }
 

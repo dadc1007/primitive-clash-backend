@@ -15,7 +15,9 @@ namespace PrimitiveClash.Backend.Models
 
         public bool IsWalkable(ArenaEntity newEntity)
         {
-            if (Type == CellType.River || Tower)
+            if (Tower)return false;
+
+            if (Type == CellType.River && (newEntity.PlayerCard.Card as AttackCard)!.UnitClass != UnitClass.Air)
                 return false;
 
             return !Collision(newEntity);
@@ -36,31 +38,38 @@ namespace PrimitiveClash.Backend.Models
             UpdateEntities(newEntity, false);
         }
 
-        public bool Collision(ArenaEntity newEntity)
+        public void RemoveTower()
+        {
+            Tower = false;
+        }
+
+        private bool Collision(ArenaEntity newEntity)
         {
             AttackCard attackCard = (newEntity.PlayerCard.Card as AttackCard)!;
 
-            if (attackCard.UnitClass == UnitClass.Ground && GroundEntity)
+            switch (attackCard.UnitClass)
             {
-                return true;
+                case UnitClass.Ground when GroundEntity:
+                case UnitClass.Air when AirEntity:
+                    return true;
+                default:
+                    return false;
             }
-
-            if (attackCard.UnitClass == UnitClass.Air && AirEntity)
-            {
-                return true;
-            }
-
-            return false;
         }
 
-        public void UpdateEntities(ArenaEntity entity, bool adding)
+        private void UpdateEntities(ArenaEntity entity, bool adding)
         {
             AttackCard attackCard = (entity.PlayerCard.Card as AttackCard)!;
 
-            if (attackCard.UnitClass == UnitClass.Ground)
-                GroundEntity = adding;
-            if (attackCard.UnitClass == UnitClass.Air)
-                AirEntity = adding;
+            switch (attackCard.UnitClass)
+            {
+                case UnitClass.Ground:
+                    GroundEntity = adding;
+                    break;
+                case UnitClass.Air:
+                    AirEntity = adding;
+                    break;
+            }
         }
     }
 

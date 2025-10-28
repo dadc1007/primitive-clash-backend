@@ -5,6 +5,6 @@ namespace PrimitiveClash.Backend.Services
 {
     public interface IBehaviorService
     {
-        void ExecuteTroopAction(Guid sessionId, Arena arena, TroopEntity troop);
+        void ExecuteAction(Guid sessionId, Arena arena, Positioned unit);
     }
 }

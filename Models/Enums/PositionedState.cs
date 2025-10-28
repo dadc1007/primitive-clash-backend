@@ -1,6 +1,6 @@
 namespace PrimitiveClash.Backend.Models.Enums
 {
-    public enum TroopState
+    public enum PositionedState
     {
         Idle,
         Moving,
