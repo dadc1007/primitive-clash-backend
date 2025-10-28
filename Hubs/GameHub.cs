@@ -6,6 +6,7 @@ using PrimitiveClash.Backend.Services;
 namespace PrimitiveClash.Backend.Hubs
 {
     public class GameHub(
+        IServiceScopeFactory scopeFactory,
         IGameService gameService,
         IBattleService battleService,
         ILogger<GameHub> logger
@@ -13,6 +14,7 @@ namespace PrimitiveClash.Backend.Hubs
     {
         private const string SessionIdKey = "SessionId";
         private const string UserIdKey = "UserId";
+        private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
         private readonly IGameService _gameService = gameService;
         private readonly IBattleService _battleService = battleService;
         private readonly ILogger<GameHub> _logger = logger;
@@ -44,7 +46,9 @@ namespace PrimitiveClash.Backend.Hubs
                     isConnected: true
                 );
 
-                await Clients.Caller.SendAsync("GameSync", updatedGame);
+                await Clients.Caller.SendAsync("JoinedToGame", updatedGame);
+
+                StartLoop(updatedGame, sessionId);
             }
             catch (GameNotFoundException)
             {
@@ -125,6 +129,16 @@ namespace PrimitiveClash.Backend.Hubs
             }
 
             await base.OnDisconnectedAsync(exception);
+        }
+
+        private void StartLoop(Game game, Guid sessionId)
+        {
+            if (!game.PlayerStates.All(p => p.IsConnected))
+                return;
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            IGameLoopService gameLoopService =
+                scope.ServiceProvider.GetRequiredService<IGameLoopService>();
+            gameLoopService.StartGameLoop(sessionId);
         }
     }
 }

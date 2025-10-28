@@ -10,4 +10,5 @@ public interface INotificationService
     Task NotifyUnitDamaged(Guid sessionId, UnitDamagedNotification obj);
     Task NotifyUnitKilled(Guid sessionId, UnitKilledNotificacion obj);
     Task NotifyEndGame(Guid sessionId, EndGameNotification obj);
+    Task NotifyNewElixir(string playerConnectionId, decimal playerCurrentElixir);
 }
