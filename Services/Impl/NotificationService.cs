@@ -11,52 +11,58 @@ public class NotificationService(IHubContext<GameHub> gameHub, ILogger<Notificat
     private readonly IHubContext<GameHub> _gameHub = gameHub;
     private readonly ILogger<NotificationService> _logger = logger;
 
-    public async Task NotifyCardSpawned(Guid sessionId, CardSpawnedNotification notification)
+    public async Task NotifyCardSpawned(Guid sessionId, CardSpawnedNotification obj)
     {
-        await _gameHub.Clients.Group(sessionId.ToString()).SendAsync("CardSpawned", notification);
+        await _gameHub.Clients.Group(sessionId.ToString()).SendAsync("CardSpawned", obj);
 
         _logger.LogDebug(
-            "Sent CardSpawned notification to session {SessionId}: {@Notification}",
+            "Sent CardSpawned notification to session {SessionId}: {@Obj}",
             sessionId,
-            notification
+            obj
         );
     }
 
-    public async Task NotifyTroopMoved(Guid sessionId, TroopMovedNotification notification)
+    public async Task NotifyTroopMoved(Guid sessionId, TroopMovedNotification obj)
     {
-        await _gameHub.Clients.Group(sessionId.ToString()).SendAsync("TroopMoved", notification);
+        await _gameHub.Clients.Group(sessionId.ToString()).SendAsync("TroopMoved", obj);
 
         _logger.LogDebug(
-            "Sent TroopMoved notification to session {SessionId}: {@Notification}",
+            "Sent TroopMoved notification to session {SessionId}: {@Obj}",
             sessionId,
-            notification
+            obj
         );
     }
 
-    public async Task NotifyUnitDamaged(Guid sessionId, UnitDamagedNotification notification)
+    public async Task NotifyUnitDamaged(Guid sessionId, UnitDamagedNotification obj)
     {
-        await _gameHub.Clients.Group(sessionId.ToString()).SendAsync("UnitDamaged", notification);
+        await _gameHub.Clients.Group(sessionId.ToString()).SendAsync("UnitDamaged", obj);
 
         _logger.LogDebug(
-            "Sent UnitDamaged notification to session {SessionId}: {@Notification}",
+            "Sent UnitDamaged notification to session {SessionId}: {@Obj}",
             sessionId,
-            notification
+            obj
         );
     }
 
-    public async Task NotifyUnitKilled(
-        Guid sessionId,
-        UnitKilledNotificacion unitDamagedNotification
-    )
+    public async Task NotifyUnitKilled(Guid sessionId, UnitKilledNotificacion obj)
     {
-        await _gameHub
-            .Clients.Group(sessionId.ToString())
-            .SendAsync("UnitKilled", unitDamagedNotification);
+        await _gameHub.Clients.Group(sessionId.ToString()).SendAsync("UnitKilled", obj);
 
         _logger.LogDebug(
-            "Sent UnitKilled notification to session {SessionId}: {@Notification}",
+            "Sent UnitKilled notification to session {SessionId}: {@Obj}",
             sessionId,
-            unitDamagedNotification
+            obj
+        );
+    }
+
+    public async Task NotifyEndGame(Guid sessionId, EndGameNotification obj)
+    {
+        await _gameHub.Clients.Group(sessionId.ToString()).SendAsync("EndGame", obj);
+        
+        _logger.LogDebug(
+            "Sent EndGame notification to session {SessionId}: {@Obj}",
+            sessionId,
+            obj
         );
     }
 }

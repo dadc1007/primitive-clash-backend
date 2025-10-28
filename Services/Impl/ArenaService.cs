@@ -6,7 +6,10 @@ using PrimitiveClash.Backend.Services.Factories;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
-    public class ArenaService(IArenaTemplateService arenaTemplateService, IArenaEntityFactory attackEntityFactory) : IArenaService
+    public class ArenaService(
+        IArenaTemplateService arenaTemplateService,
+        IArenaEntityFactory attackEntityFactory
+    ) : IArenaService
     {
         private readonly IArenaTemplateService _arenaTemplateService = arenaTemplateService;
         private readonly IArenaEntityFactory _attackEntityFactory = attackEntityFactory;
@@ -18,9 +21,16 @@ namespace PrimitiveClash.Backend.Services.Impl
             return new Arena(arenaTemplate, towers);
         }
 
-        public ArenaEntity CreateEntity(Arena arena, PlayerState player, PlayerCard card, int x, int y)
+        public ArenaEntity CreateEntity(
+            Arena arena,
+            PlayerState player,
+            PlayerCard card,
+            int x,
+            int y
+        )
         {
-            if (!arena.IsInsideBounds(x, y)) throw new InvalidSpawnPositionException(x, y);
+            if (!arena.IsInsideBounds(x, y))
+                throw new InvalidSpawnPositionException(x, y);
 
             ArenaEntity entity = _attackEntityFactory.CreateEntity(player, card, x, y);
             arena.PlaceEntity(entity);
@@ -58,39 +68,36 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         public IEnumerable<ArenaEntity> GetEnemiesInVision(Arena arena, Positioned positioned)
         {
-            double vision = 0;
-
-            if (positioned is TroopEntity troop)
+            double vision = positioned switch
             {
-                vision = (troop.PlayerCard.Card as TroopCard)!.VisionRange;
-            }
+                TroopEntity troop => (troop.PlayerCard.Card as TroopCard)!.VisionRange,
+                Tower tower => tower.TowerTemplate.Range,
+                _ => 0,
+            };
 
-            if (positioned is Tower tower)
+            foreach (
+                ArenaEntity enemy in arena
+                    .Entities.Where(kvp => kvp.Key != positioned.UserId)
+                    .SelectMany(kvp =>
+                        from enemy in kvp.Value
+                        let distance = CalculateDistance(positioned, enemy)
+                        where distance <= vision
+                        select enemy
+                    )
+            )
             {
-                vision = tower.TowerTemplate.Range;
-            }
-
-            foreach (var kvp in arena.Entities)
-            {
-                if (kvp.Key == positioned.UserId) continue;
-
-                foreach (var enemy in kvp.Value)
-                {
-                    double distance = CalculateDistance(positioned, enemy);
-                    if (distance <= vision) yield return enemy;
-                }
+                yield return enemy;
             }
         }
 
         public Tower GetNearestEnemyTower(Arena arena, TroopEntity troop)
         {
-            var enemyTowers = arena.Towers
-                .Where(kvp => kvp.Key != troop.UserId)
+            IEnumerable<Tower> enemyTowers = arena
+                .Towers.Where(kvp => kvp.Key != troop.UserId)
                 .SelectMany(kvp => kvp.Value);
 
-            return enemyTowers
-                .OrderBy(t => CalculateDistance(troop, t))
-                .FirstOrDefault() ?? throw new EnemyTowersNotFoundException();
+            return enemyTowers.OrderBy(t => CalculateDistance(troop, t)).FirstOrDefault()
+                ?? throw new EnemyTowersNotFoundException();
         }
 
         public bool CanExecuteMovement(Arena arena, ArenaEntity troop, int x, int y)
@@ -100,14 +107,23 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         public void KillPositioned(Arena arena, Positioned positioned)
         {
-            if (positioned is ArenaEntity arenaEntity)
+            switch (positioned)
             {
-                arena.KillArenaEntity(arenaEntity);
+                case ArenaEntity arenaEntity:
+                    arena.KillArenaEntity(arenaEntity);
+                    break;
+                case Tower tower:
+                    arena.KillTower(tower);
+                    break;
             }
-            else if (positioned is Tower tower)
-            {
-                arena.KillTower(tower);
-            }
+        }
+
+        public (int towersWinner, int towersLosser) GetNumberTowers(Arena arena, Guid winnerId, Guid losserId)
+        {
+            int towersWinner = arena.Towers[winnerId].Count(t => t.IsAlive());
+            int towersLosser = arena.Towers[losserId].Count(t => t.IsAlive());
+            
+            return (towersWinner, towersLosser);
         }
     }
 }

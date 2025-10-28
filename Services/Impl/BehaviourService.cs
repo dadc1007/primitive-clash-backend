@@ -72,6 +72,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             double distance = _arenaService.CalculateDistance(attacker, target);
             if (distance > range) return false;
 
+            attacker.State = PositionedState.Attacking;
             _battleService.HandleAttack(sessionId, arena, attacker, target);
             _logger.LogInformation(
                 "{AttackerType} {AttackerId} attacked target {TargetId} (distance={Distance}, range={Range})",
@@ -173,7 +174,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 }
             }
 
-
+            troop.State = PositionedState.Moving;
             _battleService.HandleMovement(sessionId, troop, arena);
         }
 

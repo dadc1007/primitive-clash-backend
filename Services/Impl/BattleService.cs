@@ -1,3 +1,4 @@
+using PrimitiveClash.Backend.DTOs.Notifications;
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.ArenaEntities;
@@ -65,7 +66,7 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             await _notificationService.NotifyCardSpawned(
                 sessionId,
-                CardSpawnedMapper.ToCardSpawnedNotification(
+                new CardSpawnedNotification(
                     entity.Id,
                     entity.UserId,
                     entity.PlayerCard.Card.Id,
@@ -108,7 +109,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 attacker.CurrentTargetId = null;
                 attacker.CurrentTargetPosition = null;
                 attacker.State = PositionedState.Idle;
-                
+
                 _arenaService.KillPositioned(arena, target);
                 _logger.LogWarning(
                     "[{SessionId}] {TargetType} {TargetId} was killed by {AttackerId}",
@@ -121,20 +122,18 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             await _notificationService.NotifyUnitDamaged(
                 sessionId,
-                UnitDamagedMapper.ToUnitDamagedNotification(
-                    attacker.Id,
-                    target.Id,
-                    damage,
-                    target.Health
-                )
+                new UnitDamagedNotification(attacker.Id, target.Id, damage, target.Health)
             );
 
             if (died)
             {
                 await _notificationService.NotifyUnitKilled(
                     sessionId,
-                    UnitKilledMapper.ToUnitKilledNotificacion(attacker.Id, target.Id)
+                    new UnitKilledNotificacion(attacker.Id, target.Id)
                 );
+
+                if (target is Tower)
+                    await _gameService.EndGame(sessionId, arena, attacker.UserId, target.UserId);
             }
         }
 
@@ -178,7 +177,7 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             await _notificationService.NotifyTroopMoved(
                 sessionId,
-                TroopMovedMapper.ToTroopMovedNotification(
+                new TroopMovedNotification(
                     troop.Id,
                     troop.UserId,
                     troop.X,
