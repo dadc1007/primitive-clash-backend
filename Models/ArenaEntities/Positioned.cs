@@ -8,6 +8,8 @@ namespace PrimitiveClash.Backend.Models.ArenaEntities
 
     public class Positioned(Guid userId, int x, int y) : Point(x, y)
     {
+        private readonly object _lock = new();
+        
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid UserId { get; set; } = userId;
         public int Health { get; set; }
@@ -18,12 +20,30 @@ namespace PrimitiveClash.Backend.Models.ArenaEntities
 
         public void TakeDamage(int damage)
         {
-            Health -= damage;
+            lock (_lock)
+            {
+                Health -= damage;
+            }
         }
 
         public bool IsAlive()
         {
-            return Health > 0;
+            lock (_lock)
+            {
+                return Health > 0;
+            }
         }
+        
+        public void UpdateState(PositionedState state, Guid? targetId, Point? targetPos)
+        {
+            lock(_lock)
+            {
+                State = state;
+                CurrentTargetId = targetId;
+                CurrentTargetPosition = targetPos;
+            }
+        }
+
+        public object GetLock() => _lock;
     }
 }

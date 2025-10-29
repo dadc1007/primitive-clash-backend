@@ -68,9 +68,16 @@ public class NotificationService(IHubContext<GameHub> gameHub, ILogger<Notificat
 
     public async Task NotifyNewElixir(string playerConnectionId, decimal playerCurrentElixir)
     {
+        if (string.IsNullOrEmpty(playerConnectionId))
+        {
+            _logger.LogWarning("NotifyNewElixir: playerConnectionId es null o vacío, no se enviará notificación.");
+            return;
+        }
+
         await _gameHub
             .Clients.Client(playerConnectionId)
             .SendAsync("NewElixir", playerCurrentElixir);
+
         _logger.LogDebug(
             "Sent NewElixir notification to player {PlayerConnectionId}: {PlayerCurrentElixir}",
             playerConnectionId,

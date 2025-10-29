@@ -1,4 +1,6 @@
-namespace PrimitiveClash.Backend.Services.Impl
+using PrimitiveClash.Backend.Services;
+
+namespace PrimitiveClash.Backend.Background
 {
     public class GameLoopWorker(IServiceProvider serviceProvider) : IHostedService, IDisposable
     {
