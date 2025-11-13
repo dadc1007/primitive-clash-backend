@@ -11,7 +11,7 @@ namespace PrimitiveClash.Backend.Services
         List<Tower> GetTowers(Arena arena); 
         void PlaceEntity(Arena arena, ArenaEntity entity);
         void RemoveEntity(Arena arena, ArenaEntity entity);
-        double CalculateDistance(Positioned sourceEntity, Positioned targetEntity);
+        double CalculateChebyshevDistance(Positioned sourceEntity, Positioned targetEntity);
         IEnumerable<ArenaEntity> GetEnemiesInVision(Arena arena, Positioned positioned);
         Tower GetNearestEnemyTower(Arena arena, TroopEntity troop);
         bool CanExecuteMovement(Arena arena, ArenaEntity troop, int x, int y);

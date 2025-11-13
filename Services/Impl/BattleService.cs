@@ -49,6 +49,7 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             ArenaEntity entity = _arenaService.CreateEntity(game.GameArena, player, card, x, y);
             player.CurrentElixir -= card.Card.ElixirCost;
+            PlayerCard cardToPut = player.GetNextCard();
 
             player.PlayCard(cardId);
 
@@ -65,18 +66,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             _logger.LogDebug("Game saved after spawning card for session {SessionId}", sessionId);
 
             await _notificationService.NotifyCardSpawned(
-                sessionId,
-                new CardSpawnedNotification(
-                    entity.Id,
-                    entity.UserId,
-                    entity.PlayerCard.Id,
-                    entity.PlayerCard.Level,
-                    entity.X,
-                    entity.Y,
-                    player.GetNextCard().Id
-                )
-            );
-            await _notificationService.NotifyNewElixir(player.ConnectionId, player.CurrentElixir);
+                sessionId, player, entity, cardToPut);
         }
 
         public async Task HandleAttack(
@@ -124,7 +114,7 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             await _notificationService.NotifyUnitDamaged(
                 sessionId,
-                new UnitDamagedNotification(attacker.Id, target.Id, damage, target.Health)
+                UnitDamagedNotificationMapper.ToUnitDamagedNotification(attacker, target, damage)
             );
 
             if (died)
@@ -182,6 +172,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 new TroopMovedNotification(
                     troop.Id,
                     troop.UserId,
+                    troop.PlayerCard.Card.Id,
                     troop.X,
                     troop.Y,
                     troop.State.ToString()

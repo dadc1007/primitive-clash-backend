@@ -16,7 +16,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
         builder => builder
-            .WithOrigins("http://localhost:5173", "https://primitive-clash-frontend.vercel.app")
+            .WithOrigins("http://localhost:5173", "http://localhost:4173", "https://primitive-clash-frontend.vercel.app")
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials());
@@ -57,11 +57,7 @@ builder.Services.AddSingleton<IGameLoopService, GameLoopService>();
 builder.Services.AddHostedService<GameLoopWorker>();
 
 // SignalR Service
-builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString!).AddJsonProtocol(options =>
-{
-    options.PayloadSerializerOptions.ReferenceHandler =
-            ReferenceHandler.Preserve;
-});
+builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString!);
 builder.Services.AddHostedService<MatchmakingService>();
 builder.Services.AddSingleton<IMatchmakingService, MatchmakingService>();
 

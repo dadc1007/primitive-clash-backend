@@ -48,7 +48,10 @@ namespace PrimitiveClash.Backend.Hubs
                     isConnected: true
                 );
 
-                await Clients.Caller.SendAsync("JoinedToGame", updatedGame);
+                await Clients.Caller.SendAsync(
+                    "JoinedToGame",
+                    JoinedToGameNotificationMapper.ToJoinedToGameNotification(updatedGame)
+                );
                 await Clients
                     .Client(Context.ConnectionId)
                     .SendAsync(
@@ -144,8 +147,6 @@ namespace PrimitiveClash.Backend.Hubs
 
         private void StartLoop(Game game, Guid sessionId)
         {
-            if (!game.PlayerStates.All(p => p.IsConnected))
-                return;
             using IServiceScope scope = _scopeFactory.CreateScope();
             IGameLoopService gameLoopService =
                 scope.ServiceProvider.GetRequiredService<IGameLoopService>();
