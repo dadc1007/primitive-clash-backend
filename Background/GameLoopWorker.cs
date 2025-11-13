@@ -5,7 +5,7 @@ namespace PrimitiveClash.Backend.Services.Impl
         private readonly IServiceProvider _serviceProvider = serviceProvider;
         private Timer? _timer = null;
 
-        private const int TickIntervalMs = 5000;
+        private const int TickIntervalMs = 1000;
 
         public Task StartAsync(CancellationToken cancellationToken)
         {

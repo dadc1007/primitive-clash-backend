@@ -69,7 +69,7 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         private bool TryAttackTargetIfInRange(Guid sessionId, Positioned attacker, Positioned target, double range, Arena arena)
         {
-            double distance = _arenaService.CalculateDistance(attacker, target);
+            double distance = _arenaService.CalculateChebyshevDistance(attacker, target);
             if (distance > range) return false;
 
             attacker.State = PositionedState.Attacking;
@@ -101,7 +101,7 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             if (enemies.Count == 0) return false;
 
-            ArenaEntity nearest = enemies.OrderBy(e => _arenaService.CalculateDistance(troop, e)).First();
+            ArenaEntity nearest = enemies.OrderBy(e => _arenaService.CalculateChebyshevDistance(troop, e)).First();
             double range = (troop.PlayerCard.Card as TroopCard)!.Range;
 
             if (!TryAttackTargetIfInRange(sessionId, troop, nearest, range, arena))
@@ -124,7 +124,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             if (TryAttackTargetIfInRange(sessionId, troop, tower, range, arena)) return;
             
             _logger.LogInformation("Troop {TroopId} moving to {TowerId} (distance={Distance}, range={Range})",
-                troop.Id, tower.Id, _arenaService.CalculateDistance(troop, tower), range);
+                troop.Id, tower.Id, _arenaService.CalculateChebyshevDistance(troop, tower), range);
 
             MoveTowardsTarget(sessionId, arena, troop, tower);
         }
@@ -134,7 +134,7 @@ namespace PrimitiveClash.Backend.Services.Impl
             IEnumerable<ArenaEntity> enemies = _arenaService.GetEnemiesInVision(arena, tower).ToList();
             if (!enemies.Any()) return;
 
-            ArenaEntity nearest = enemies.OrderBy(e => _arenaService.CalculateDistance(tower, e)).First();
+            ArenaEntity nearest = enemies.OrderBy(e => _arenaService.CalculateChebyshevDistance(tower, e)).First();
             double range = tower.TowerTemplate.Range;
 
             TryAttackTargetIfInRange(sessionId, tower, nearest, range, arena);

@@ -2,6 +2,9 @@
 using PrimitiveClash.Backend.DTOs.Notifications;
 using PrimitiveClash.Backend.Hubs;
 using PrimitiveClash.Backend.Models;
+using PrimitiveClash.Backend.Models.ArenaEntities;
+using PrimitiveClash.Backend.Models.Cards;
+using PrimitiveClash.Backend.Utils.Mappers;
 
 namespace PrimitiveClash.Backend.Services.Impl;
 
@@ -11,15 +14,35 @@ public class NotificationService(IHubContext<GameHub> gameHub, ILogger<Notificat
     private readonly IHubContext<GameHub> _gameHub = gameHub;
     private readonly ILogger<NotificationService> _logger = logger;
 
-    public async Task NotifyCardSpawned(Guid sessionId, CardSpawnedNotification obj)
+    public async Task NotifyCardSpawned(
+        Guid sessionId,
+        PlayerState player,
+        ArenaEntity entity,
+        PlayerCard cardToPut
+    )
     {
-        await _gameHub.Clients.Group(sessionId.ToString()).SendAsync("CardSpawned", obj);
+        CardSpawnedNotification cardSpawnedNotification = new CardSpawnedNotification(
+            entity.Id,
+            entity.UserId,
+            entity.PlayerCard.Card.Id,
+            entity.PlayerCard.Level,
+            entity.X,
+            entity.Y,
+            entity.Health,
+            (entity.PlayerCard.Card as AttackCard)!.Hp
+        );
+
+        await _gameHub
+            .Clients.Group(sessionId.ToString())
+            .SendAsync("CardSpawned", cardSpawnedNotification);
 
         _logger.LogDebug(
             "Sent CardSpawned notification to session {SessionId}: {@Obj}",
             sessionId,
-            obj
+            cardSpawnedNotification
         );
+
+        await NotifyRefreshHand(player, cardToPut);
     }
 
     public async Task NotifyTroopMoved(Guid sessionId, TroopMovedNotification obj)
@@ -68,13 +91,76 @@ public class NotificationService(IHubContext<GameHub> gameHub, ILogger<Notificat
 
     public async Task NotifyNewElixir(string playerConnectionId, decimal playerCurrentElixir)
     {
-        await _gameHub
-            .Clients.Client(playerConnectionId)
-            .SendAsync("NewElixir", playerCurrentElixir);
-        _logger.LogDebug(
-            "Sent NewElixir notification to player {PlayerConnectionId}: {PlayerCurrentElixir}",
-            playerConnectionId,
-            playerCurrentElixir
-        );
+        if (string.IsNullOrEmpty(playerConnectionId))
+        {
+            _logger.LogWarning(
+                "No se envió NewElixir: ConnectionId es nulo o vacío (valor={PlayerCurrentElixir})",
+                playerCurrentElixir
+            );
+            return;
+        }
+
+        try
+        {
+            await _gameHub
+                .Clients.Client(playerConnectionId)
+                .SendAsync("NewElixir", playerCurrentElixir);
+
+            _logger.LogDebug(
+                "Sent NewElixir notification to player {PlayerConnectionId}: {PlayerCurrentElixir}",
+                playerConnectionId,
+                playerCurrentElixir
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error enviando NewElixir a {PlayerConnectionId}",
+                playerConnectionId
+            );
+        }
+    }
+
+    private async Task NotifyRefreshHand(PlayerState player, PlayerCard cardToPut)
+    {
+        if (string.IsNullOrEmpty(player.ConnectionId))
+        {
+            _logger.LogWarning(
+                "No se envió RefreshHand: player {PlayerId} sin ConnectionId",
+                player.Id
+            );
+            return;
+        }
+
+        try
+        {
+            await _gameHub
+                .Clients.Client(player.ConnectionId)
+                .SendAsync(
+                    "RefreshHand",
+                    RefreshHandNotificationMapper.ToRefreshHandNotification(
+                        cardToPut,
+                        player.GetNextCard(),
+                        player.CurrentElixir
+                    )
+                );
+
+            _logger.LogDebug(
+                "Sent RefreshHand notification to player {PlayerConnectionId}: Elixir={PlayerCurrentElixir}, PlayedCard={PlayedCardId}, NextCard={NextCardId}",
+                player.ConnectionId,
+                player.CurrentElixir,
+                cardToPut?.Id,
+                player.GetNextCard()?.Id
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error enviando RefreshHand a {ConnectionId}",
+                player.ConnectionId
+            );
+        }
     }
 }

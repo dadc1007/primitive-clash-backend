@@ -1,3 +1,3 @@
 ﻿namespace PrimitiveClash.Backend.DTOs.Notifications;
 
-public record EndGameNotification(Guid winnerId, Guid losserId, int towersWinner, int towersLosser);
+public record EndGameNotification(Guid WinnerId, Guid LosserId, int TowersWinner, int TowersLosser);

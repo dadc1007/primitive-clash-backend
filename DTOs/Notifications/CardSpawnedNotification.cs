@@ -7,5 +7,6 @@ public record CardSpawnedNotification(
     int Level,
     int X,
     int Y,
-    Guid NextCardId
+    int Health,
+    int MaxHealth
 );

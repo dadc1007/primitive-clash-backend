@@ -72,7 +72,7 @@ namespace PrimitiveClash.Backend.Data
                     new TroopCard
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Mini Dragón",
+                        Name = "Mini Dragon",
                         ElixirCost = 4,
                         Rarity = CardRarity.Rare,
                         Type = CardType.Troop,
@@ -91,7 +91,7 @@ namespace PrimitiveClash.Backend.Data
                     new TroopCard
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Dragón Prehistórico",
+                        Name = "Dragon Prehistorico",
                         ElixirCost = 5,
                         Rarity = CardRarity.Epic,
                         Type = CardType.Troop,
@@ -110,7 +110,7 @@ namespace PrimitiveClash.Backend.Data
                     new TroopCard
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Pterodáctilo",
+                        Name = "Pterodactilo",
                         ElixirCost = 3,
                         Rarity = CardRarity.Rare,
                         Type = CardType.Troop,
@@ -129,7 +129,7 @@ namespace PrimitiveClash.Backend.Data
                     new TroopCard
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Gólem de Piedra",
+                        Name = "Golem de Piedra",
                         ElixirCost = 6,
                         Rarity = CardRarity.Epic,
                         Type = CardType.Troop,
@@ -201,7 +201,7 @@ namespace PrimitiveClash.Backend.Data
                         Damage = 120,
                         Range = 5,
                         Type = TowerType.Guardian,
-                        Size = 4,
+                        Size = 3,
                     },
                 ];
 
