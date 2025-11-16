@@ -46,7 +46,7 @@ namespace PrimitiveClash.Backend.Services.Impl
         {
             using IServiceScope scope = _scopeFactory.CreateScope();
             IGameService gameService = scope.ServiceProvider.GetRequiredService<IGameService>();
-            IBehaviorService behaviorService =
+            IBehaviorService behaviourService =
                 scope.ServiceProvider.GetRequiredService<IBehaviorService>();
             IArenaService arenaService = scope.ServiceProvider.GetRequiredService<IArenaService>();
 
@@ -79,7 +79,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                         {
                             try
                             {
-                                behaviorService.ExecuteAction(sessionId, arena, entity);
+                                behaviourService.ExecuteAction(sessionId, arena, entity);
                             }
                             catch (Exception ex)
                             {
@@ -101,7 +101,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                         {
                             try
                             {
-                                behaviorService.ExecuteAction(sessionId, arena, tower);
+                                behaviourService.ExecuteAction(sessionId, arena, tower);
                             }
                             catch (Exception ex)
                             {
@@ -119,7 +119,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 // Esperar todas las tareas de esta sesión
                 await Task.WhenAll(entityTasks.Concat(towerTasks));
 
-                // 5. Actualizar elixir y guardar
+                // Actualizar elixir y guardar
                 await gameService.UpdateElixir(game);
                 await gameService.SaveGame(game);
 

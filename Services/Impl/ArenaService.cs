@@ -61,12 +61,19 @@ namespace PrimitiveClash.Backend.Services.Impl
             arena.RemoveEntity(entity);
         }
 
-        public double CalculateDistance(Positioned sourceEntity, Positioned targetEntity)
+        public double CalculateChebyshevDistance(Positioned sourceEntity, Positioned targetEntity)
         {
             int dx = Math.Abs(targetEntity.X - sourceEntity.X);
             int dy = Math.Abs(targetEntity.Y - sourceEntity.Y);
 
             return Math.Max(dx, dy);
+        }
+
+        public double CalculateEuclideanDistance(Positioned sourceEntity, Positioned targetEntity)
+        {
+            int dx = targetEntity.X - sourceEntity.X;
+            int dy = targetEntity.Y - sourceEntity.Y;
+            return Math.Sqrt(dx * dx + dy * dy);
         }
 
         public IEnumerable<ArenaEntity> GetEnemiesInVision(Arena arena, Positioned positioned)
@@ -83,7 +90,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                     .Entities.Where(kvp => kvp.Key != positioned.UserId)
                     .SelectMany(kvp =>
                         from enemy in kvp.Value
-                        let distance = CalculateDistance(positioned, enemy)
+                        let distance = CalculateChebyshevDistance(positioned, enemy)
                         where distance <= vision
                         select enemy
                     )
@@ -97,10 +104,12 @@ namespace PrimitiveClash.Backend.Services.Impl
         {
             IEnumerable<Tower> enemyTowers = arena
                 .Towers.Where(kvp => kvp.Key != troop.UserId)
-                .SelectMany(kvp => kvp.Value);
+                .SelectMany(kvp => kvp.Value)
+                .ToList();
 
-            return enemyTowers.OrderBy(t => CalculateDistance(troop, t)).FirstOrDefault()
-                ?? throw new EnemyTowersNotFoundException();
+            return !enemyTowers.Any()
+                ? throw new EnemyTowersNotFoundException()
+                : enemyTowers.OrderBy(t => CalculateEuclideanDistance(troop, t)).First();
         }
 
         public bool CanExecuteMovement(Arena arena, ArenaEntity troop, int x, int y)

@@ -32,7 +32,8 @@ namespace PrimitiveClash.Backend.Utils.Mappers
                 playerCard.Card.Name,
                 playerCard.Card.Rarity,
                 playerCard.Card.ElixirCost,
-                playerCard.Level
+                playerCard.Level,
+                playerCard.Card.ImageUrl
             );
         }
     }

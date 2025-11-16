@@ -7,7 +7,8 @@ namespace PrimitiveClash.Backend.Models
         private readonly object _lock = new();
         
         public Guid Id { get; set; } = id;
-        public bool IsConnected { get; set; } = true;
+        public bool IsConnected { get; set; } = false;
+        
         public string? ConnectionId { get; set; }
         public List<PlayerCard> Cards { get; set; } = cards;
         public decimal CurrentElixir { get; set; } = 5.0m;

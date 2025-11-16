@@ -16,5 +16,6 @@ namespace PrimitiveClash.Backend.Models.Cards
         public CardType Type { get; set; }
         public int Damage { get; set; }
         public required List<UnitClass> Targets { get; set; }
+        public string ImageUrl { get; set; }
     }
 }

@@ -7,6 +7,7 @@ namespace PrimitiveClash.Backend.DTOs.Decks.Responses
         string CardName,
         CardRarity Rarity,
         int ElixirCost,
-        int Level
+        int Level,
+        string ImageUrl
     );
 }

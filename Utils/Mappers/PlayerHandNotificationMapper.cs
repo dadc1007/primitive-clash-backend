@@ -18,7 +18,8 @@ public static class PlayerHandNotificationMapper
                             player.Id,
                             playerCard.Id,
                             playerCard.CardId,
-                            playerCard.Card.ElixirCost
+                            playerCard.Card.ElixirCost,
+                            playerCard.Card.ImageUrl
                         )
                     )
                 )
@@ -30,7 +31,8 @@ public static class PlayerHandNotificationMapper
                 player.Id,
                 nextCard.Id,
                 nextCard.CardId,
-                nextCard.Card.ElixirCost
+                nextCard.Card.ElixirCost,
+                nextCard.Card.ImageUrl
             )
         );
     }
