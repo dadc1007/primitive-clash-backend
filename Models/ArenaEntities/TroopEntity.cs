@@ -7,6 +7,8 @@ namespace PrimitiveClash.Backend.Models.ArenaEntities
 {
     public class TroopEntity : ArenaEntity
     {
+        private readonly object _lock = new();
+        
         // Solo para serialización
         public List<Point> PathSteps { get; set; } = [];
         [JsonIgnore]
@@ -34,5 +36,7 @@ namespace PrimitiveClash.Backend.Models.ArenaEntities
         {
             PathSteps = [.. Path];
         }
+        
+        public object GetLock() => _lock;
     }
 }

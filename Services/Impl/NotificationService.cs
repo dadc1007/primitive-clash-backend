@@ -93,33 +93,19 @@ public class NotificationService(IHubContext<GameHub> gameHub, ILogger<Notificat
     {
         if (string.IsNullOrEmpty(playerConnectionId))
         {
-            _logger.LogWarning(
-                "No se envió NewElixir: ConnectionId es nulo o vacío (valor={PlayerCurrentElixir})",
-                playerCurrentElixir
-            );
+            _logger.LogWarning("NotifyNewElixir: playerConnectionId es null o vacío, no se enviará notificación.");
             return;
         }
 
-        try
-        {
-            await _gameHub
-                .Clients.Client(playerConnectionId)
-                .SendAsync("NewElixir", playerCurrentElixir);
+        await _gameHub
+            .Clients.Client(playerConnectionId)
+            .SendAsync("NewElixir", playerCurrentElixir);
 
-            _logger.LogDebug(
-                "Sent NewElixir notification to player {PlayerConnectionId}: {PlayerCurrentElixir}",
-                playerConnectionId,
-                playerCurrentElixir
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(
-                ex,
-                "Error enviando NewElixir a {PlayerConnectionId}",
-                playerConnectionId
-            );
-        }
+        _logger.LogDebug(
+            "Sent NewElixir notification to player {PlayerConnectionId}: {PlayerCurrentElixir}",
+            playerConnectionId,
+            playerCurrentElixir
+        );
     }
 
     private async Task NotifyRefreshHand(PlayerState player, PlayerCard cardToPut)

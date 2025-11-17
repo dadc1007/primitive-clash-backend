@@ -130,9 +130,12 @@ namespace PrimitiveClash.Backend.Models
             int y = entity.Y;
 
             Cell cell = Grid[y][x];
-            bool placed = cell.PlaceEntity(entity);
 
-            if (!placed) throw new InvalidSpawnPositionException(x, y);
+            lock (cell)
+            {
+                bool placed = cell.PlaceEntity(entity);
+                if (!placed) throw new InvalidSpawnPositionException(x, y);
+            }
 
             if (Entities.TryGetValue(entity.UserId, out var list))
             {

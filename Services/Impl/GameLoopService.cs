@@ -28,15 +28,16 @@ namespace PrimitiveClash.Backend.Services.Impl
             // Crear una lista de tareas (Task) para procesar cada sesión en paralelo.
             List<Guid> sessionsToProcess = _activeSessions.Keys.ToList();
 
+            if (sessionsToProcess.Count == 0)
+                return;
+
             _logger.LogDebug(
                 "Iniciando ProcessTick. Sesiones activas: {Count}",
                 sessionsToProcess.Count
             );
 
-            List<Task> processingTasks = sessionsToProcess.Select(ProcessSessionTick).ToList();
-
             // Esperar a que todas las tareas de procesamiento terminen. Esto es lo que permite el procesamiento PARALELO.
-            await Task.WhenAll(processingTasks);
+            await Task.WhenAll(sessionsToProcess.Select(ProcessSessionTick));
 
             _logger.LogDebug("ProcessTick completado.");
         }
@@ -57,11 +58,11 @@ namespace PrimitiveClash.Backend.Services.Impl
             {
                 _logger.LogDebug("Iniciando tick para Sesión: {SessionId}", sessionId);
 
-                // 1. Obtener estado
+                // Obtener estado
                 Game game = await gameService.GetGame(sessionId);
                 Arena arena = game.GameArena;
 
-                // 2. Logica
+                // Logica
                 List<ArenaEntity> entities = arenaService.GetEntities(arena);
                 List<Tower> towers = arenaService.GetTowers(arena);
 
@@ -71,22 +72,58 @@ namespace PrimitiveClash.Backend.Services.Impl
                     entities.Count + towers.Count
                 );
 
-                foreach (ArenaEntity entity in entities)
-                {
-                    behaviourService.ExecuteAction(sessionId, arena, entity);
-                }
+                // Procesar entidades EN PARALELO
+                List<Task> entityTasks = entities
+                    .Select(entity =>
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                behaviourService.ExecuteAction(sessionId, arena, entity);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(
+                                    ex,
+                                    "Error procesando entidad {EntityId} en sesión {SessionId}",
+                                    entity.Id,
+                                    sessionId
+                                );
+                            }
+                        })
+                    )
+                    .ToList();
 
-                foreach (Tower tower in towers)
-                {
-                    behaviourService.ExecuteAction(sessionId, arena, tower);
-                }
+                // Procesar torres EN PARALELO también
+                List<Task> towerTasks = towers
+                    .Select(tower =>
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                behaviourService.ExecuteAction(sessionId, arena, tower);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(
+                                    ex,
+                                    "Error procesando torre {TowerId} en sesión {SessionId}",
+                                    tower.Id,
+                                    sessionId
+                                );
+                            }
+                        })
+                    )
+                    .ToList();
 
+                // Esperar todas las tareas de esta sesión
+                await Task.WhenAll(entityTasks.Concat(towerTasks));
+
+                // Actualizar elixir y guardar
                 await gameService.UpdateElixir(game);
-
-                // 3. Persistir estado
                 await gameService.SaveGame(game);
 
-                _logger.LogDebug("Sesión {SessionId}: Estado guardado en Redis.", sessionId);
+                _logger.LogDebug("Sesión {SessionId}: Tick completado y guardado.", sessionId);
             }
             catch (Exception ex)
             {

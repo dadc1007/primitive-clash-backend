@@ -35,23 +35,32 @@ namespace PrimitiveClash.Backend.Services.Impl
             PlayerCard card =
                 player.Cards.FirstOrDefault(c => c.Id == cardId)
                 ?? throw new InvalidCardException(cardId);
+            ArenaEntity entity;
+            Cell cell = game.GameArena.Grid[y][x];
+            PlayerCard cardToPut;
 
-            if (player.CurrentElixir < card.Card.ElixirCost)
+            lock (player.GetLock())
             {
-                _logger.LogWarning(
-                    "Not enough elixir: required={Required}, available={Available}, player={PlayerId}",
-                    card.Card.ElixirCost,
-                    player.CurrentElixir,
-                    player.Id
-                );
-                throw new NotEnoughElixirException(card.Card.ElixirCost, player.CurrentElixir);
+                if (player.CurrentElixir < card.Card.ElixirCost)
+                {
+                    _logger.LogWarning(
+                        "Not enough elixir: required={Required}, available={Available}, player={PlayerId}",
+                        card.Card.ElixirCost,
+                        player.CurrentElixir,
+                        player.Id
+                    );
+                    throw new NotEnoughElixirException(card.Card.ElixirCost, player.CurrentElixir);
+                }
+
+                lock (cell)
+                { 
+                    entity = _arenaService.CreateEntity(game.GameArena, player, card, x, y);
+                }
+                
+                player.CurrentElixir -= card.Card.ElixirCost;
+                cardToPut = player.GetNextCard();
+                player.PlayCard(cardId);
             }
-
-            ArenaEntity entity = _arenaService.CreateEntity(game.GameArena, player, card, x, y);
-            player.CurrentElixir -= card.Card.ElixirCost;
-            PlayerCard cardToPut = player.GetNextCard();
-
-            player.PlayCard(cardId);
 
             _logger.LogInformation(
                 "Spawned entity of card {CardId} for player {PlayerId} at ({X},{Y})",
@@ -76,57 +85,77 @@ namespace PrimitiveClash.Backend.Services.Impl
             Positioned target
         )
         {
-            int damage = attacker switch
+            Task? notifyDamage;
+            Task? notifyKill = null;
+            Task? endGame = null;
+
+            lock (target.GetLock())
             {
-                ArenaEntity e => e.PlayerCard.Card.Damage,
-                Tower t => t.TowerTemplate.Damage,
-                _ => 0,
-            };
+                if (!target.IsAlive())
+                    return;
 
-            int oldHealth = target.Health;
-            target.TakeDamage(damage);
+                int damage = attacker switch
+                {
+                    ArenaEntity e => e.PlayerCard.Card.Damage,
+                    Tower t => t.TowerTemplate.Damage,
+                    _ => 0,
+                };
 
-            _logger.LogInformation(
-                "[{SessionId}] Target {TargetId} health: {OldHealth} -> {NewHealth}",
-                sessionId,
-                target.Id,
-                oldHealth,
-                target.Health
-            );
+                int oldHealth = target.Health;
+                target.TakeDamage(damage);
 
-            bool died = !target.IsAlive();
-
-            if (died)
-            {
-                attacker.CurrentTargetId = null;
-                attacker.CurrentTargetPosition = null;
-                attacker.State = PositionedState.Idle;
-
-                _arenaService.KillPositioned(arena, target);
-                _logger.LogWarning(
-                    "[{SessionId}] {TargetType} {TargetId} was killed by {AttackerId}",
+                _logger.LogInformation(
+                    "[{SessionId}] Target {TargetId} health: {OldHealth} -> {NewHealth}",
                     sessionId,
                     target.Id,
-                    target.GetType().Name,
-                    attacker.Id
+                    oldHealth,
+                    target.Health
                 );
-            }
 
-            await _notificationService.NotifyUnitDamaged(
+                bool died = !target.IsAlive();
+
+                if (died)
+                {
+                    attacker.UpdateState(PositionedState.Idle, null, null);
+                    _arenaService.KillPositioned(arena, target);
+                    _logger.LogWarning(
+                        "[{SessionId}] {TargetType} {TargetId} was killed by {AttackerId}",
+                        sessionId,
+                        target.Id,
+                        target.GetType().Name,
+                        attacker.Id
+                    );
+                }
+
+                notifyDamage = _notificationService.NotifyUnitDamaged(
                 sessionId,
                 UnitDamagedNotificationMapper.ToUnitDamagedNotification(attacker, target, damage)
             );
 
-            if (died)
-            {
-                await _notificationService.NotifyUnitKilled(
-                    sessionId,
-                    new UnitKilledNotificacion(attacker.Id, target.Id)
-                );
+                if (died)
+                {
+                    notifyKill = _notificationService.NotifyUnitKilled(
+                        sessionId,
+                        new UnitKilledNotificacion(attacker.Id, target.Id)
+                    );
 
-                if (target is Tower)
-                    await _gameService.EndGame(sessionId, arena, attacker.UserId, target.UserId);
+                    if (target is Tower)
+                        endGame = _gameService.EndGame(
+                            sessionId,
+                            arena,
+                            attacker.UserId,
+                            target.UserId
+                        );
+                }
             }
+
+            List<Task> tasks = [notifyDamage];
+            if (notifyKill != null)
+                tasks.Add(notifyKill);
+            if (endGame != null)
+                tasks.Add(endGame);
+
+            await Task.WhenAll(tasks);
         }
 
         public async Task HandleMovement(Guid sessionId, TroopEntity troop, Arena arena)
@@ -146,26 +175,41 @@ namespace PrimitiveClash.Backend.Services.Impl
                 return;
             }
 
-            int prevX = troop.X;
-            int prevY = troop.Y;
+            lock (troop.GetLock())
+            {
+                int prevX = troop.X;
+                int prevY = troop.Y;
+                Point next = troop.Path.Peek();
+                Cell currentCell = arena.Grid[prevY][prevX];
+                Cell nextCell = arena.Grid[next.Y][next.X];
 
-            _arenaService.RemoveEntity(arena, troop);
+                object firstLock = currentCell.GetHashCode() < nextCell.GetHashCode() ? currentCell : nextCell;
+                object secondLock = currentCell.GetHashCode() < nextCell.GetHashCode() ? nextCell : currentCell;
 
-            Point point = troop.Path.Dequeue();
-            troop.X = point.X;
-            troop.Y = point.Y;
-            troop.State = PositionedState.Moving;
+                lock (firstLock)
+                {
+                    lock (secondLock)
+                    {
+                        arena.RemoveEntity(troop);
 
-            _arenaService.PlaceEntity(arena, troop);
+                        troop.Path.Dequeue();
+                        troop.X = next.X;
+                        troop.Y = next.Y;
+                        troop.State = PositionedState.Moving;
 
-            _logger.LogInformation(
-                "Troop {TroopId} moved from ({PrevX},{PrevY}) to ({X},{Y})",
-                troop?.Id,
-                prevX,
-                prevY,
-                point.X,
-                point.Y
-            );
+                        arena.PlaceEntity(troop);
+                    }
+                }
+
+                _logger.LogInformation(
+                    "Troop {TroopId} moved from ({PrevX},{PrevY}) to ({X},{Y})",
+                    troop?.Id,
+                    prevX,
+                    prevY,
+                    troop.X,
+                    troop.Y
+                );
+            }
 
             await _notificationService.NotifyTroopMoved(
                 sessionId,

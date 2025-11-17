@@ -4,6 +4,8 @@ namespace PrimitiveClash.Backend.Models
 {
     public class PlayerState(Guid id, List<PlayerCard> cards)
     {
+        private readonly object _lock = new();
+        
         public Guid Id { get; set; } = id;
         public bool IsConnected { get; set; } = false;
         
@@ -29,5 +31,7 @@ namespace PrimitiveClash.Backend.Models
         {
             return Cards[4];
         }
+        
+        public object GetLock() => _lock;
     }
 }
