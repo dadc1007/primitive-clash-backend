@@ -100,6 +100,7 @@ builder.Services.AddScoped<IGameService, GameService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton<IGameLoopService, GameLoopService>();
 builder.Services.AddHostedService<GameLoopWorker>();
+builder.Services.AddHealthChecks();
 
 // SignalR Service
 builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString!);
@@ -157,4 +158,5 @@ app.UseAuthorization();
 app.MapHub<MatchmakingHub>("/hubs/matchmaking");
 app.MapHub<GameHub>("/hubs/game");
 app.MapControllers();
+app.MapHealthChecks("/health");
 app.Run();
