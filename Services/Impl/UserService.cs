@@ -10,23 +10,17 @@ namespace PrimitiveClash.Backend.Services.Impl
         private readonly AppDbContext _context = context;
         private readonly IDeckService _deckService = deckService;
 
-        public async Task<User> RegisterUser(string username, string email, string password)
+        public async Task<User> GetOrCreateUser(string oid, string email)
         {
-            if (await UsernameExists(username))
-            {
-                throw new UsernameExistsException(username);
-            }
+            User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == oid);
+            
+            if (user != null) return user;
 
-            if (await EmailExists(email))
+            user = new User
             {
-                throw new EmailExistsException(email);
-            }
-
-            User user = new()
-            {
-                Username = username,
+                Id = Guid.Parse(oid),
+                Username = email.Split("@")[0],
                 Email = email,
-                PasswordHash = password
             };
 
             Deck deck = await _deckService.InitializeDeck(user.Id);
@@ -36,16 +30,6 @@ namespace PrimitiveClash.Backend.Services.Impl
             await _context.SaveChangesAsync();
 
             return user;
-        }
-
-        private async Task<bool> UsernameExists(string username)
-        {
-            return await _context.Users.AnyAsync(u => u.Username == username);
-        }
-
-        private async Task<bool> EmailExists(string email)
-        {
-            return await _context.Users.AnyAsync(u => u.Email == email);
         }
     }
 }

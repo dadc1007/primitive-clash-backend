@@ -4,10 +4,9 @@ namespace PrimitiveClash.Backend.Models
 {
     public class User
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id { get; set; }
         public required string Username { get; set; }
         public required string Email { get; set; }
-        public required string PasswordHash { get; set; }
         public int Gold { get; private set; } = 1000;
         public int Gems { get; private set; } = 100;
         public int Level { get; private set; } = 1;

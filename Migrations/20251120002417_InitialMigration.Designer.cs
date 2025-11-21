@@ -12,8 +12,8 @@ using PrimitiveClash.Backend.Data;
 namespace PrimitiveClash.Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251024200249_TowerTemplatesAdded")]
-    partial class TowerTemplatesAdded
+    [Migration("20251120002417_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -62,6 +62,10 @@ namespace PrimitiveClash.Backend.Migrations
 
                     b.Property<int>("ElixirCost")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -158,6 +162,9 @@ namespace PrimitiveClash.Backend.Migrations
                     b.Property<int>("Range")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Size")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("text");
@@ -188,10 +195,6 @@ namespace PrimitiveClash.Backend.Migrations
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<int>("Trophies")
                         .HasColumnType("integer");
@@ -233,6 +236,11 @@ namespace PrimitiveClash.Backend.Migrations
                     b.Property<int>("Range")
                         .ValueGeneratedOnUpdateSometimes()
                         .HasColumnType("integer");
+
+                    b.Property<string>("UnitClass")
+                        .IsRequired()
+                        .ValueGeneratedOnUpdateSometimes()
+                        .HasColumnType("text");
 
                     b.HasDiscriminator().HasValue("Building");
                 });
@@ -276,13 +284,14 @@ namespace PrimitiveClash.Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("MovementType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<int>("Range")
                         .ValueGeneratedOnUpdateSometimes()
                         .HasColumnType("integer");
+
+                    b.Property<string>("UnitClass")
+                        .IsRequired()
+                        .ValueGeneratedOnUpdateSometimes()
+                        .HasColumnType("text");
 
                     b.Property<int>("VisionRange")
                         .HasColumnType("integer");

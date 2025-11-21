@@ -1,4 +1,5 @@
 using System.Net.Mime;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrimitiveClash.Backend.DTOs.Decks.Responses;
 using PrimitiveClash.Backend.Exceptions;
@@ -15,6 +16,7 @@ namespace PrimitiveClash.Backend.Controllers
     {
         private readonly IDeckService _deckService = deckService;
 
+        [Authorize]
         [HttpGet("user/{userId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DeckResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
