@@ -193,10 +193,6 @@ namespace PrimitiveClash.Backend.Migrations
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<int>("Trophies")
                         .HasColumnType("integer");
 

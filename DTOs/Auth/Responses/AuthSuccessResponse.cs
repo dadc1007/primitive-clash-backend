@@ -7,7 +7,6 @@ namespace PrimitiveClash.Backend.DTOs.Auth.Responses
         int Gold,
         int Gems,
         int Level,
-        int Trophies,
-        string? Token
+        int Trophies
     );
 }

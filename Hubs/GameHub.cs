@@ -1,12 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using PrimitiveClash.Backend.DTOs.Notifications;
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Services;
+using PrimitiveClash.Backend.Utils;
 using PrimitiveClash.Backend.Utils.Mappers;
 
 namespace PrimitiveClash.Backend.Hubs
 {
+    [Authorize]
     public class GameHub(
         IServiceScopeFactory scopeFactory,
         IGameService gameService,
@@ -21,10 +23,11 @@ namespace PrimitiveClash.Backend.Hubs
         private readonly IBattleService _battleService = battleService;
         private readonly ILogger<GameHub> _logger = logger;
 
-        public async Task JoinGame(Guid sessionId, Guid userId)
+        public async Task JoinGame(Guid sessionId)
         {
             try
             {
+                Guid userId = this.GetAuthenticatedUserId();
                 Game game = await _gameService.GetGame(sessionId);
 
                 if (game.PlayerStates.All(p => p.Id != userId))
@@ -62,7 +65,11 @@ namespace PrimitiveClash.Backend.Hubs
                         )
                     );
 
-                StartLoop(updatedGame, sessionId);
+                StartLoop(sessionId);
+            }
+            catch (HubException ex)
+            {
+                await Clients.Caller.SendAsync("Error", ex.Message);
             }
             catch (GameNotFoundException)
             {
@@ -84,22 +91,19 @@ namespace PrimitiveClash.Backend.Hubs
             }
         }
 
-        public async Task SpawnCard(Guid sessionId, Guid userId, Guid cardId, int x, int y)
+        public async Task SpawnCard(Guid sessionId, Guid cardId, int x, int y)
         {
-            _logger.LogInformation(
-                "Attempting spawn: Session={SessionId}, User={UserId}, Card={CardId}, Pos=({X},{Y})",
-                sessionId,
-                userId,
-                cardId,
-                x,
-                y
-            );
-
             try
             {
+                Guid userId = this.GetAuthenticatedUserId();
+
                 await _battleService.SpawnCard(sessionId, userId, cardId, x, y);
 
                 _logger.LogInformation("Spawn successful");
+            }
+            catch (HubException ex)
+            {
+                await Clients.Caller.SendAsync("Error", ex.Message);
             }
             catch (NotEnoughElixirException ex)
             {
@@ -145,7 +149,7 @@ namespace PrimitiveClash.Backend.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        private void StartLoop(Game game, Guid sessionId)
+        private void StartLoop(Guid sessionId)
         {
             using IServiceScope scope = _scopeFactory.CreateScope();
             IGameLoopService gameLoopService =

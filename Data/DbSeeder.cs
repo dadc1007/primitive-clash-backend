@@ -14,7 +14,7 @@ namespace PrimitiveClash.Backend.Data
                 [
                     new TroopCard
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Guid("6ce2da92-188d-4458-b9a3-8f4e7ae02864"),
                         Name = "Cavernicola",
                         ElixirCost = 2,
                         Rarity = CardRarity.Common,
@@ -33,7 +33,7 @@ namespace PrimitiveClash.Backend.Data
                     },
                     new TroopCard
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Guid("1a4b313f-5dff-4163-8dc5-eb2bf2df0a41"),
                         Name = "Cavernicola de Lanza",
                         ElixirCost = 3,
                         Rarity = CardRarity.Common,
@@ -52,7 +52,7 @@ namespace PrimitiveClash.Backend.Data
                     },
                     new TroopCard
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Guid("8b76c8c0-614f-4783-84f5-a9965eb01093"),
                         Name = "Mini Dino",
                         ElixirCost = 3,
                         Rarity = CardRarity.Rare,
@@ -71,7 +71,7 @@ namespace PrimitiveClash.Backend.Data
                     },
                     new TroopCard
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Guid("fe53ae3f-9575-48e0-847e-ad675cb51e7b"),
                         Name = "Mini Dragon",
                         ElixirCost = 4,
                         Rarity = CardRarity.Rare,
@@ -90,7 +90,7 @@ namespace PrimitiveClash.Backend.Data
                     },
                     new TroopCard
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Guid("14a6debd-dc5a-42c6-a46a-ba2f137c6a50"),
                         Name = "Dragon Prehistorico",
                         ElixirCost = 5,
                         Rarity = CardRarity.Epic,
@@ -109,7 +109,7 @@ namespace PrimitiveClash.Backend.Data
                     },
                     new TroopCard
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Guid("29a0c77e-54da-40ec-afbb-cdd5449fd40f"),
                         Name = "Pterodactilo",
                         ElixirCost = 3,
                         Rarity = CardRarity.Rare,
@@ -128,7 +128,7 @@ namespace PrimitiveClash.Backend.Data
                     },
                     new TroopCard
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Guid("0a1ae662-f5a3-4826-ab65-42d37b997154"),
                         Name = "Golem de Piedra",
                         ElixirCost = 6,
                         Rarity = CardRarity.Epic,
@@ -147,7 +147,7 @@ namespace PrimitiveClash.Backend.Data
                     },
                     new TroopCard
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Guid("6b75ea3b-a3b5-4ec6-8a38-31ca352bee55"),
                         Name = "Cavernicola Guerrero",
                         ElixirCost = 4,
                         Rarity = CardRarity.Legendary,
@@ -173,7 +173,7 @@ namespace PrimitiveClash.Backend.Data
             {
                 ArenaTemplate arena = new()
                 {
-                    Id = Guid.NewGuid(),
+                    Id = new Guid(),
                     Name = "Valle Primitivo",
                     RequiredTrophies = 0,
                 };
@@ -187,7 +187,7 @@ namespace PrimitiveClash.Backend.Data
                 [
                     new TowerTemplate
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Guid("4e718199-d25b-4f0f-88e2-221a43eb5dc6"),
                         Hp = 3200,
                         Damage = 120,
                         Range = 6,
@@ -196,7 +196,7 @@ namespace PrimitiveClash.Backend.Data
                     },
                     new TowerTemplate
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Guid("dc719076-4eea-4ec8-9d49-732d440cb27f"),
                         Hp = 2000,
                         Damage = 120,
                         Range = 5,

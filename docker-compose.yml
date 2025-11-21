@@ -26,6 +26,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: ${CONNECTION_STRING}
       Redis__ConnectionString: ${REDIS_CONNECTION}
+      AzureAd__Instance: ${AZURE_AD_INSTANCE}
+      AzureAd__Domain: ${AZURE_AD_DOMAIN}
+      AzureAd__TenantId: ${AZURE_AD_TENANT_ID}
+      AzureAd__ClientId: ${AZURE_AD_CLIENT_ID}
     ports:
       - "5247:80"
     restart: unless-stopped

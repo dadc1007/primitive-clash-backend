@@ -1,10 +1,9 @@
 using System.Net.Mime;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PrimitiveClash.Backend.DTOs.Auth.Requests;
 using PrimitiveClash.Backend.DTOs.Auth.Responses;
-using PrimitiveClash.Backend.Exceptions;
-using PrimitiveClash.Backend.Services;
 using PrimitiveClash.Backend.Models;
+using PrimitiveClash.Backend.Services;
 using PrimitiveClash.Backend.Utils.Mappers;
 
 namespace PrimitiveClash.Backend.Controllers
@@ -12,56 +11,43 @@ namespace PrimitiveClash.Backend.Controllers
     [ApiController]
     [Route("api/auth")]
     [Produces(MediaTypeNames.Application.Json)]
-    public class AuthController(IAuthService authService) : ControllerBase
+    public class AuthController(IUserService userService) : ControllerBase
     {
-        private readonly IAuthService _authService = authService;
+        private readonly IUserService _userService = userService;
 
-        [HttpPost("signup")]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(AuthSuccessResponse))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> SignUp([FromBody] SignupRequest request)
-        {
-            try
-            {
-                User newUser = await _authService.RegisterUser(request.Username, request.Email, request.Password);
-                AuthSuccessResponse response = newUser.ToAuthSuccessResponse("");
-
-                return StatusCode(StatusCodes.Status201Created, response);
-            }
-            catch (UsernameExistsException ex)
-            {
-                return Conflict(new { error = ex.Message, field = "username" });
-            }
-            catch (EmailExistsException ex)
-            {
-                return Conflict(new { error = ex.Message, field = "email" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An unexpected error occurred.", details = ex.Message });
-            }
-        }
-
-        [HttpPost("login")]
+        [Authorize]
+        [HttpPost("upsert")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthSuccessResponse))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpsertUser()
         {
             try
             {
-                User user = await _authService.LoginUser(request.Email, request.Password);
-                AuthSuccessResponse response = user.ToAuthSuccessResponse("");
+                string? oid = User.FindFirst("oid")?.Value;
+                string? email = User.FindFirst("preferred_username")?.Value;
 
-                return Ok(response);
+                if (string.IsNullOrWhiteSpace(oid))
+                    return BadRequest(new { error = "Token inválido: no contiene el OID." });
+
+                if (string.IsNullOrWhiteSpace(email))
+                    return BadRequest(new { error = "Token inválido: no contiene el email." });
+
+                User user = await _userService.GetOrCreateUser(oid, email);
+
+                return Ok(user.ToAuthSuccessResponse());
             }
-            catch (InvalidCredentialsException)
+            catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new { error = "Invalid email or password." });
+                return Unauthorized(new { error = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An unexpected error occurred.", details = ex.Message });
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new { error = "An unexpected error occurred.", details = ex.Message }
+                );
             }
         }
     }

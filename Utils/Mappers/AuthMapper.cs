@@ -5,7 +5,7 @@ namespace PrimitiveClash.Backend.Utils.Mappers
 {
     public static class AuthMapper
     {
-        public static AuthSuccessResponse ToAuthSuccessResponse(this User user, string token)
+        public static AuthSuccessResponse ToAuthSuccessResponse(this User user)
         {
             if (user == null)
             {
@@ -19,8 +19,7 @@ namespace PrimitiveClash.Backend.Utils.Mappers
                 user.Gold,
                 user.Gems,
                 user.Level,
-                user.Trophies,
-                token
+                user.Trophies
             );
         }
     }
