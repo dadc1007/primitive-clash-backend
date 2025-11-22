@@ -98,6 +98,7 @@ builder.Services.AddScoped<IBattleService, BattleService>();
 builder.Services.AddScoped<IBehaviorService, BehaviourService>();
 builder.Services.AddScoped<IGameService, GameService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ICardService, CardService>();
 builder.Services.AddSingleton<IGameLoopService, GameLoopService>();
 builder.Services.AddHostedService<GameLoopWorker>();
 

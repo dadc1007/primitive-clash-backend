@@ -1,4 +1,4 @@
-using PrimitiveClash.Backend.DTOs.Decks.Responses;
+using PrimitiveClash.Backend.DTOs.Deck.Responses;
 using PrimitiveClash.Backend.Models;
 
 namespace PrimitiveClash.Backend.Utils.Mappers

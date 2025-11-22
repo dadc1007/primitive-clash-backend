@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using PrimitiveClash.Backend.Controllers;
-using PrimitiveClash.Backend.DTOs.Decks.Responses;
+using PrimitiveClash.Backend.DTOs.Deck.Responses;
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Services;
