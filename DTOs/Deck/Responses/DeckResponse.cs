@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PrimitiveClash.Backend.DTOs.Decks.Responses
+namespace PrimitiveClash.Backend.DTOs.Deck.Responses
 {
     public record DeckResponse(
         Guid DeckId,

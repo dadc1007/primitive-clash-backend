@@ -47,7 +47,6 @@ namespace PrimitiveClash.Backend.Exceptions
 
     public class InvalidSpawnPositionException(int x, int y) : GameException($"Cannot spawn unit at position ({x}, {y}). Cell not walkable or occupied.") { }
 
-
     public class NotEnoughElixirException(float required, decimal available) : GameException($"Not enough elixir. Required: {required}, available: {available}.") { }
 
     public class InvalidCardException(Guid cardId) : GameException($"Card with ID '{cardId}' is invalid or not in player's hand.") { }
@@ -61,4 +60,6 @@ namespace PrimitiveClash.Backend.Exceptions
     public class CardNotInHandException() : GameException("Card not in hand");
     
     public class InvalidArenaSideException() : GameException("A card can be placed only in the player side arena");
+    
+    public class CardNotFoundException() : GameException("Card not found");
 }

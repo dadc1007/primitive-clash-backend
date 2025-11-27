@@ -1,4 +1,4 @@
-using PrimitiveClash.Backend.DTOs.Decks.Responses;
+using PrimitiveClash.Backend.DTOs.Deck.Responses;
 using PrimitiveClash.Backend.Models;
 
 namespace PrimitiveClash.Backend.Utils.Mappers
@@ -29,6 +29,7 @@ namespace PrimitiveClash.Backend.Utils.Mappers
 
             return new CardInDeckResponse(
                 playerCard.Id,
+                playerCard.Card.Id,
                 playerCard.Card.Name,
                 playerCard.Card.Rarity,
                 playerCard.Card.ElixirCost,
