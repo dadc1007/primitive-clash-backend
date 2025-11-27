@@ -29,6 +29,7 @@ namespace PrimitiveClash.Backend.Utils.Mappers
 
             return new CardInDeckResponse(
                 playerCard.Id,
+                playerCard.Card.Id,
                 playerCard.Card.Name,
                 playerCard.Card.Rarity,
                 playerCard.Card.ElixirCost,

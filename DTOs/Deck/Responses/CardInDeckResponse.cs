@@ -4,6 +4,7 @@ namespace PrimitiveClash.Backend.DTOs.Deck.Responses
 {
     public record CardInDeckResponse(
         Guid PlayerCardId,
+        Guid CardId,
         string CardName,
         CardRarity Rarity,
         int ElixirCost,

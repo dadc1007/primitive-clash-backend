@@ -3,6 +3,7 @@
 namespace PrimitiveClash.Backend.DTOs.Card.Responses;
 
 public record CardResponse(
+    Guid Id,
     string Name,
     int ElixirCost,
     CardRarity Rarity,

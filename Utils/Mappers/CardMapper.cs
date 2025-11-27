@@ -17,6 +17,7 @@ public static class CardMapper
     private static CardResponse ToTroopResponse(TroopCard t)
     {
         return new CardResponse(
+            t.Id,
             t.Name,
             t.ElixirCost,
             t.Rarity,
