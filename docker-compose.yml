@@ -1,0 +1,38 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "6543:5432"
+
+  redis:
+    image: redis:7
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: ${CONNECTION_STRING}
+      Redis__ConnectionString: ${REDIS_CONNECTION}
+      AzureAd__Instance: ${AZURE_AD_INSTANCE}
+      AzureAd__Domain: ${AZURE_AD_DOMAIN}
+      AzureAd__TenantId: ${AZURE_AD_TENANT_ID}
+      AzureAd__ClientId: ${AZURE_AD_CLIENT_ID}
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
