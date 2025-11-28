@@ -12,7 +12,7 @@ env:
   ECS_CLUSTER: primitive-clash-cluster-v2
   ECS_SERVICE: primitive-clash-service
   ECS_TASK_DEFINITION: primitive-clash-task
-  CONTAINER_NAME: primitive-clash-backend
+  CONTAINER_NAME: primitive-clash-container
 
 jobs:
   test:
