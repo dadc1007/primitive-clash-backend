@@ -8,10 +8,10 @@ on:
 
 env:
   AWS_REGION: us-east-2
-  ECR_REPOSITORY: primitive-clash/backend
-  ECS_CLUSTER: primitive-clash-cluster
-  ECS_SERVICE: primitive-clash-backend-service
-  ECS_TASK_DEFINITION: primitive-clash-backend-task
+  ECR_REPOSITORY: primitive-clash/game
+  ECS_CLUSTER: primitive-clash-cluster-v2
+  ECS_SERVICE: primitive-clash-service
+  ECS_TASK_DEFINITION: primitive-clash-task
   CONTAINER_NAME: primitive-clash-backend
 
 jobs:
