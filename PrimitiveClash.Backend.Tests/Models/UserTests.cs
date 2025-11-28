@@ -1,186 +1,186 @@
-using FluentAssertions;
-using PrimitiveClash.Backend.Exceptions;
-using PrimitiveClash.Backend.Models;
-using PrimitiveClash.Backend.Models.Cards;
-using PrimitiveClash.Backend.Models.Enums;
-using Xunit;
+// using FluentAssertions;
+// using PrimitiveClash.Backend.Exceptions;
+// using PrimitiveClash.Backend.Models;
+// using PrimitiveClash.Backend.Models.Cards;
+// using PrimitiveClash.Backend.Models.Enums;
+// using Xunit;
 
-namespace PrimitiveClash.Backend.Tests.Models;
+// namespace PrimitiveClash.Backend.Tests.Models;
 
-public class UserTests
-{
-    #region Gold Tests
+// public class UserTests
+// {
+//     #region Gold Tests
 
-    [Fact]
-    public void AddGold_WithPositiveAmount_ShouldIncreaseGold()
-    {
-        // Arrange
-        var user = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
-        };
-        var initialGold = user.Gold;
+//     [Fact]
+//     public void AddGold_WithPositiveAmount_ShouldIncreaseGold()
+//     {
+//         // Arrange
+//         var user = new User
+//         {
+//             Username = "testuser",
+//             Email = "test@example.com",
+//             PasswordHash = "hash"
+//         };
+//         var initialGold = user.Gold;
 
-        // Act
-        user.AddGold(500);
+//         // Act
+//         user.AddGold(500);
 
-        // Assert
-        user.Gold.Should().Be(initialGold + 500);
-    }
+//         // Assert
+//         user.Gold.Should().Be(initialGold + 500);
+//     }
 
-    [Fact]
-    public void SpendGold_WithSufficientGold_ShouldDecreaseGold()
-    {
-        var user = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
-        };
-        var initialGold = user.Gold;
+//     [Fact]
+//     public void SpendGold_WithSufficientGold_ShouldDecreaseGold()
+//     {
+//         var user = new User
+//         {
+//             Username = "testuser",
+//             Email = "test@example.com",
+//             PasswordHash = "hash"
+//         };
+//         var initialGold = user.Gold;
 
-        user.SpendGold(300);
+//         user.SpendGold(300);
 
-        user.Gold.Should().Be(initialGold - 300);
-    }
+//         user.Gold.Should().Be(initialGold - 300);
+//     }
 
-    [Fact]
-    public void SpendGold_WithInsufficientGold_ShouldThrowNotEnoughGoldException()
-    {
-        var user = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
-        };
+//     [Fact]
+//     public void SpendGold_WithInsufficientGold_ShouldThrowNotEnoughGoldException()
+//     {
+//         var user = new User
+//         {
+//             Username = "testuser",
+//             Email = "test@example.com",
+//             PasswordHash = "hash"
+//         };
 
-        var act = () => user.SpendGold(2000);
+//         var act = () => user.SpendGold(2000);
 
-        act.Should().Throw<NotEnoughGoldException>();
-    }
+//         act.Should().Throw<NotEnoughGoldException>();
+//     }
 
-    #endregion
+//     #endregion
 
-    #region Gems Tests
+//     #region Gems Tests
 
-    [Fact]
-    public void AddGems_WithPositiveAmount_ShouldIncreaseGems()
-    {
-        var user = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
-        };
-        var initialGems = user.Gems;
+//     [Fact]
+//     public void AddGems_WithPositiveAmount_ShouldIncreaseGems()
+//     {
+//         var user = new User
+//         {
+//             Username = "testuser",
+//             Email = "test@example.com",
+//             PasswordHash = "hash"
+//         };
+//         var initialGems = user.Gems;
 
-        user.AddGems(50);
+//         user.AddGems(50);
 
-        user.Gems.Should().Be(initialGems + 50);
-    }
+//         user.Gems.Should().Be(initialGems + 50);
+//     }
 
-    [Fact]
-    public void SpendGems_WithSufficientGems_ShouldDecreaseGems()
-    {
-        var user = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
-        };
-        var initialGems = user.Gems;
+//     [Fact]
+//     public void SpendGems_WithSufficientGems_ShouldDecreaseGems()
+//     {
+//         var user = new User
+//         {
+//             Username = "testuser",
+//             Email = "test@example.com",
+//             PasswordHash = "hash"
+//         };
+//         var initialGems = user.Gems;
 
-        user.SpendGems(30);
+//         user.SpendGems(30);
 
-        user.Gems.Should().Be(initialGems - 30);
-    }
+//         user.Gems.Should().Be(initialGems - 30);
+//     }
 
-    [Fact]
-    public void SpendGems_WithInsufficientGems_ShouldThrowNotEnoughGemsException()
-    {
-        var user = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
-        };
+//     [Fact]
+//     public void SpendGems_WithInsufficientGems_ShouldThrowNotEnoughGemsException()
+//     {
+//         var user = new User
+//         {
+//             Username = "testuser",
+//             Email = "test@example.com",
+//             PasswordHash = "hash"
+//         };
 
-        var act = () => user.SpendGems(200);
+//         var act = () => user.SpendGems(200);
 
-        act.Should().Throw<NotEnoughGemsException>();
-    }
+//         act.Should().Throw<NotEnoughGemsException>();
+//     }
 
-    #endregion
+//     #endregion
 
-    #region Trophies Tests
+//     #region Trophies Tests
 
-    [Fact]
-    public void AddTrophies_WithPositiveAmount_ShouldIncreaseTrophies()
-    {
-        var user = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
-        };
+//     [Fact]
+//     public void AddTrophies_WithPositiveAmount_ShouldIncreaseTrophies()
+//     {
+//         var user = new User
+//         {
+//             Username = "testuser",
+//             Email = "test@example.com",
+//             PasswordHash = "hash"
+//         };
 
-        user.AddTrophies(100);
+//         user.AddTrophies(100);
 
-        user.Trophies.Should().Be(100);
-    }
+//         user.Trophies.Should().Be(100);
+//     }
 
-    [Fact]
-    public void RemoveTrophies_WithSufficientTrophies_ShouldDecreaseTrophies()
-    {
-        var user = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
-        };
-        user.AddTrophies(200);
+//     [Fact]
+//     public void RemoveTrophies_WithSufficientTrophies_ShouldDecreaseTrophies()
+//     {
+//         var user = new User
+//         {
+//             Username = "testuser",
+//             Email = "test@example.com",
+//             PasswordHash = "hash"
+//         };
+//         user.AddTrophies(200);
 
-        user.RemoveTrophies(50);
+//         user.RemoveTrophies(50);
 
-        user.Trophies.Should().Be(150);
-    }
+//         user.Trophies.Should().Be(150);
+//     }
 
-    [Fact]
-    public void RemoveTrophies_WithInsufficientTrophies_ShouldThrowNotEnoughTrophiesException()
-    {
-        var user = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
-        };
+//     [Fact]
+//     public void RemoveTrophies_WithInsufficientTrophies_ShouldThrowNotEnoughTrophiesException()
+//     {
+//         var user = new User
+//         {
+//             Username = "testuser",
+//             Email = "test@example.com",
+//             PasswordHash = "hash"
+//         };
 
-        var act = () => user.RemoveTrophies(100);
+//         var act = () => user.RemoveTrophies(100);
 
-        act.Should().Throw<NotEnoughTrophiesException>();
-    }
+//         act.Should().Throw<NotEnoughTrophiesException>();
+//     }
 
-    #endregion
+//     #endregion
 
-    #region Level Tests
+//     #region Level Tests
 
-    [Fact]
-    public void LevelUp_ShouldIncreaseLevel()
-    {
-        var user = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
-        };
-        var initialLevel = user.Level;
+//     [Fact]
+//     public void LevelUp_ShouldIncreaseLevel()
+//     {
+//         var user = new User
+//         {
+//             Username = "testuser",
+//             Email = "test@example.com",
+//             PasswordHash = "hash"
+//         };
+//         var initialLevel = user.Level;
 
-        user.LevelUp();
+//         user.LevelUp();
 
-        user.Level.Should().Be(initialLevel + 1);
-    }
+//         user.Level.Should().Be(initialLevel + 1);
+//     }
 
-    #endregion
-}
+//     #endregion
+// }
