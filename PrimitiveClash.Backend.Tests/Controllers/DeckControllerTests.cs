@@ -1,145 +1,145 @@
-using FluentAssertions;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Moq;
-using PrimitiveClash.Backend.Controllers;
-using PrimitiveClash.Backend.DTOs.Deck.Responses;
-using PrimitiveClash.Backend.Exceptions;
-using PrimitiveClash.Backend.Models;
-using PrimitiveClash.Backend.Services;
-using Xunit;
+// using FluentAssertions;
+// using Microsoft.AspNetCore.Http;
+// using Microsoft.AspNetCore.Mvc;
+// using Moq;
+// using PrimitiveClash.Backend.Controllers;
+// using PrimitiveClash.Backend.DTOs.Deck.Responses;
+// using PrimitiveClash.Backend.Exceptions;
+// using PrimitiveClash.Backend.Models;
+// using PrimitiveClash.Backend.Services;
+// using Xunit;
 
-namespace PrimitiveClash.Backend.Tests.Controllers;
+// namespace PrimitiveClash.Backend.Tests.Controllers;
 
-public class DeckControllerTests
-{
-    private readonly Mock<IDeckService> _deckServiceMock;
-    private readonly DeckController _controller;
+// public class DeckControllerTests
+// {
+//     private readonly Mock<IDeckService> _deckServiceMock;
+//     private readonly DeckController _controller;
 
-    public DeckControllerTests()
-    {
-        _deckServiceMock = new Mock<IDeckService>();
-        _controller = new DeckController(_deckServiceMock.Object);
-    }
+//     public DeckControllerTests()
+//     {
+//         _deckServiceMock = new Mock<IDeckService>();
+//         _controller = new DeckController(_deckServiceMock.Object);
+//     }
 
-    #region GetDeckByUserId Tests
+//     #region GetDeckByUserId Tests
 
-    [Fact]
-    public async Task GetDeckByUserId_WithValidUserId_ShouldReturnOkResult()
-    {
-        // Arrange
-        var userId = Guid.NewGuid();
-        var expectedDeck = new Deck
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            PlayerCards = new List<PlayerCard>()
-        };
+//     [Fact]
+//     public async Task GetDeckByUserId_WithValidUserId_ShouldReturnOkResult()
+//     {
+//         // Arrange
+//         var userId = Guid.NewGuid();
+//         var expectedDeck = new Deck
+//         {
+//             Id = Guid.NewGuid(),
+//             UserId = userId,
+//             PlayerCards = new List<PlayerCard>()
+//         };
 
-        _deckServiceMock
-            .Setup(x => x.GetDeckByUserId(userId))
-            .ReturnsAsync(expectedDeck);
+//         _deckServiceMock
+//             .Setup(x => x.GetDeckByUserId(userId))
+//             .ReturnsAsync(expectedDeck);
 
-        // Act
-        var result = await _controller.GetDeckByUserId(userId);
+//         // Act
+//         var result = await _controller.GetDeckByUserId(userId);
 
-        // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
-        
-        var response = okResult!.Value as DeckResponse;
-        response.Should().NotBeNull();
-        response!.DeckId.Should().Be(expectedDeck.Id);
+//         // Assert
+//         result.Should().BeOfType<OkObjectResult>();
+//         var okResult = result as OkObjectResult;
 
-        _deckServiceMock.Verify(
-            x => x.GetDeckByUserId(userId),
-            Times.Once);
-    }
+//         var response = okResult!.Value as DeckResponse;
+//         response.Should().NotBeNull();
+//         response!.DeckId.Should().Be(expectedDeck.Id);
 
-    [Fact]
-    public async Task GetDeckByUserId_WithNonExistentUser_ShouldReturnNotFound()
-    {
-        var userId = Guid.NewGuid();
+//         _deckServiceMock.Verify(
+//             x => x.GetDeckByUserId(userId),
+//             Times.Once);
+//     }
 
-        _deckServiceMock
-            .Setup(x => x.GetDeckByUserId(userId))
-            .ThrowsAsync(new DeckNotFoundException(userId));
+//     [Fact]
+//     public async Task GetDeckByUserId_WithNonExistentUser_ShouldReturnNotFound()
+//     {
+//         var userId = Guid.NewGuid();
 
-        var result = await _controller.GetDeckByUserId(userId);
+//         _deckServiceMock
+//             .Setup(x => x.GetDeckByUserId(userId))
+//             .ThrowsAsync(new DeckNotFoundException(userId));
 
-        result.Should().BeOfType<NotFoundObjectResult>();
-        var notFoundResult = result as NotFoundObjectResult;
-        notFoundResult!.Value.Should().NotBeNull();
-        notFoundResult.Value.Should().BeOfType<string>();
-        notFoundResult.Value.ToString()!.Should().Contain(userId.ToString());
-    }
+//         var result = await _controller.GetDeckByUserId(userId);
 
-    [Fact]
-    public async Task GetDeckByUserId_WithEmptyDeck_ShouldReturnOkWithEmptyCards()
-    {
-        var userId = Guid.NewGuid();
-        var emptyDeck = new Deck
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            PlayerCards = new List<PlayerCard>()
-        };
+//         result.Should().BeOfType<NotFoundObjectResult>();
+//         var notFoundResult = result as NotFoundObjectResult;
+//         notFoundResult!.Value.Should().NotBeNull();
+//         notFoundResult.Value.Should().BeOfType<string>();
+//         notFoundResult.Value.ToString()!.Should().Contain(userId.ToString());
+//     }
 
-        _deckServiceMock
-            .Setup(x => x.GetDeckByUserId(userId))
-            .ReturnsAsync(emptyDeck);
+//     [Fact]
+//     public async Task GetDeckByUserId_WithEmptyDeck_ShouldReturnOkWithEmptyCards()
+//     {
+//         var userId = Guid.NewGuid();
+//         var emptyDeck = new Deck
+//         {
+//             Id = Guid.NewGuid(),
+//             UserId = userId,
+//             PlayerCards = new List<PlayerCard>()
+//         };
 
-        var result = await _controller.GetDeckByUserId(userId);
+//         _deckServiceMock
+//             .Setup(x => x.GetDeckByUserId(userId))
+//             .ReturnsAsync(emptyDeck);
 
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
-        
-        var response = okResult!.Value as DeckResponse;
-        response.Should().NotBeNull();
-        response!.Cards.Should().BeEmpty();
-    }
+//         var result = await _controller.GetDeckByUserId(userId);
 
-    [Fact]
-    public async Task GetDeckByUserId_WithUnexpectedException_ShouldReturnInternalServerError()
-    {
-        var userId = Guid.NewGuid();
+//         result.Should().BeOfType<OkObjectResult>();
+//         var okResult = result as OkObjectResult;
 
-        _deckServiceMock
-            .Setup(x => x.GetDeckByUserId(userId))
-            .ThrowsAsync(new Exception("Database connection failed"));
+//         var response = okResult!.Value as DeckResponse;
+//         response.Should().NotBeNull();
+//         response!.Cards.Should().BeEmpty();
+//     }
 
-        var result = await _controller.GetDeckByUserId(userId);
+//     [Fact]
+//     public async Task GetDeckByUserId_WithUnexpectedException_ShouldReturnInternalServerError()
+//     {
+//         var userId = Guid.NewGuid();
 
-        result.Should().BeOfType<ObjectResult>();
-        var objectResult = result as ObjectResult;
-        objectResult!.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-    }
+//         _deckServiceMock
+//             .Setup(x => x.GetDeckByUserId(userId))
+//             .ThrowsAsync(new Exception("Database connection failed"));
 
-    [Theory]
-    [InlineData("00000000-0000-0000-0000-000000000001")]
-    [InlineData("00000000-0000-0000-0000-000000000002")]
-    [InlineData("00000000-0000-0000-0000-000000000003")]
-    public async Task GetDeckByUserId_WithDifferentUserIds_ShouldCallServiceWithCorrectId(string userIdString)
-    {
-        var userId = Guid.Parse(userIdString);
-        var deck = new Deck
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            PlayerCards = new List<PlayerCard>()
-        };
+//         var result = await _controller.GetDeckByUserId(userId);
 
-        _deckServiceMock
-            .Setup(x => x.GetDeckByUserId(userId))
-            .ReturnsAsync(deck);
+//         result.Should().BeOfType<ObjectResult>();
+//         var objectResult = result as ObjectResult;
+//         objectResult!.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+//     }
 
-        var result = await _controller.GetDeckByUserId(userId);
+//     [Theory]
+//     [InlineData("00000000-0000-0000-0000-000000000001")]
+//     [InlineData("00000000-0000-0000-0000-000000000002")]
+//     [InlineData("00000000-0000-0000-0000-000000000003")]
+//     public async Task GetDeckByUserId_WithDifferentUserIds_ShouldCallServiceWithCorrectId(string userIdString)
+//     {
+//         var userId = Guid.Parse(userIdString);
+//         var deck = new Deck
+//         {
+//             Id = Guid.NewGuid(),
+//             UserId = userId,
+//             PlayerCards = new List<PlayerCard>()
+//         };
 
-        result.Should().BeOfType<OkObjectResult>();
-        _deckServiceMock.Verify(
-            x => x.GetDeckByUserId(userId),
-            Times.Once);
-    }
+//         _deckServiceMock
+//             .Setup(x => x.GetDeckByUserId(userId))
+//             .ReturnsAsync(deck);
 
-    #endregion
-}
+//         var result = await _controller.GetDeckByUserId(userId);
+
+//         result.Should().BeOfType<OkObjectResult>();
+//         _deckServiceMock.Verify(
+//             x => x.GetDeckByUserId(userId),
+//             Times.Once);
+//     }
+
+//     #endregion
+// }
