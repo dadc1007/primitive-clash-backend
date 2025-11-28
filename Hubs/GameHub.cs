@@ -60,8 +60,8 @@ namespace PrimitiveClash.Backend.Hubs
                     .SendAsync(
                         "Hand",
                         PlayerHandNotificationMapper.ToPlayerHandNotification(
-                            game.GameArena,
-                            _gameService.GetPlayerState(game, userId)
+                            updatedGame.GameArena,
+                            _gameService.GetPlayerState(updatedGame, userId)
                         )
                     );
 

@@ -12,6 +12,10 @@ namespace PrimitiveClash.Backend.Services.Impl
         private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
         private readonly ILogger<GameLoopService> _logger = logger;
 
+        // Contador de ticks para determinar cuándo actualizar el elixir
+        private int _tickCounter = 0;
+        private const int ElixirUpdateInterval = 3;
+
         public void StartGameLoop(Guid sessionId)
         {
             _activeSessions.TryAdd(sessionId, true);
@@ -25,6 +29,9 @@ namespace PrimitiveClash.Backend.Services.Impl
 
         public async Task ProcessTick()
         {
+            _tickCounter++;
+            bool shouldUpdateElixir = _tickCounter % ElixirUpdateInterval == 0;
+
             // Crear una lista de tareas (Task) para procesar cada sesión en paralelo.
             List<Guid> sessionsToProcess = _activeSessions.Keys.ToList();
 
@@ -37,12 +44,12 @@ namespace PrimitiveClash.Backend.Services.Impl
             );
 
             // Esperar a que todas las tareas de procesamiento terminen. Esto es lo que permite el procesamiento PARALELO.
-            await Task.WhenAll(sessionsToProcess.Select(ProcessSessionTick));
+            await Task.WhenAll(sessionsToProcess.Select(sessionId => ProcessSessionTick(sessionId, shouldUpdateElixir)));
 
             _logger.LogDebug("ProcessTick completado.");
         }
 
-        private async Task ProcessSessionTick(Guid sessionId)
+        private async Task ProcessSessionTick(Guid sessionId, bool shouldUpdateElixir)
         {
             using IServiceScope scope = _scopeFactory.CreateScope();
             IGameService gameService = scope.ServiceProvider.GetRequiredService<IGameService>();
@@ -119,8 +126,13 @@ namespace PrimitiveClash.Backend.Services.Impl
                 // Esperar todas las tareas de esta sesión
                 await Task.WhenAll(entityTasks.Concat(towerTasks));
 
-                // Actualizar elixir y guardar
-                await gameService.UpdateElixir(game);
+                // Actualizar elixir solo si corresponde
+                if (shouldUpdateElixir)
+                {
+                    _logger.LogDebug("Sesión {SessionId}: Actualizando elixir.", sessionId);
+                    await gameService.UpdateElixir(game);
+                }
+
                 await gameService.SaveGame(game);
 
                 _logger.LogDebug("Sesión {SessionId}: Tick completado y guardado.", sessionId);
