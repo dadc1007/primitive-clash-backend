@@ -18,8 +18,7 @@ public class UserTests
         var user = new User
         {
             Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
+            Email = "test@example.com"
         };
         var initialGold = user.Gold;
 
@@ -36,8 +35,7 @@ public class UserTests
         var user = new User
         {
             Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
+            Email = "test@example.com"
         };
         var initialGold = user.Gold;
 
@@ -52,8 +50,7 @@ public class UserTests
         var user = new User
         {
             Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
+            Email = "test@example.com"
         };
 
         var act = () => user.SpendGold(2000);
@@ -71,8 +68,7 @@ public class UserTests
         var user = new User
         {
             Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
+            Email = "test@example.com"
         };
         var initialGems = user.Gems;
 
@@ -87,8 +83,7 @@ public class UserTests
         var user = new User
         {
             Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
+            Email = "test@example.com"
         };
         var initialGems = user.Gems;
 
@@ -103,8 +98,7 @@ public class UserTests
         var user = new User
         {
             Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
+            Email = "test@example.com"
         };
 
         var act = () => user.SpendGems(200);
@@ -122,8 +116,7 @@ public class UserTests
         var user = new User
         {
             Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
+            Email = "test@example.com"
         };
 
         user.AddTrophies(100);
@@ -137,8 +130,7 @@ public class UserTests
         var user = new User
         {
             Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
+            Email = "test@example.com"
         };
         user.AddTrophies(200);
 
@@ -153,8 +145,7 @@ public class UserTests
         var user = new User
         {
             Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
+            Email = "test@example.com"
         };
 
         var act = () => user.RemoveTrophies(100);
@@ -172,8 +163,7 @@ public class UserTests
         var user = new User
         {
             Username = "testuser",
-            Email = "test@example.com",
-            PasswordHash = "hash"
+            Email = "test@example.com"
         };
         var initialLevel = user.Level;
 

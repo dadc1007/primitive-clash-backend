@@ -39,7 +39,7 @@ public class DeckServiceTests : IClassFixture<DatabaseFixture>
         };
         var gameSettingsOptions = Options.Create(gameSettings);
         var service = new DeckService(context, playerCardServiceMock.Object, gameSettingsOptions);
-        
+
         var userId = Guid.NewGuid();
         var starterCards = Enumerable.Range(0, _maxDeckSize)
             .Select(_ => new PlayerCard
@@ -56,11 +56,13 @@ public class DeckServiceTests : IClassFixture<DatabaseFixture>
                     Rarity = CardRarity.Common,
                     Type = CardType.Troop,
                     Damage = 100,
-                    Targets = [CardTarget.Ground],
+                    UnitClass = UnitClass.Ground,
+                    Targets = [UnitClass.Ground],
                     Hp = 300,
                     Range = 1,
                     HitSpeed = 1.0f,
-                    MovementSpeed = MovementSpeed.Medium
+                    MovementSpeed = MovementSpeed.Medium,
+                    ImageUrl = "test.png"
                 }
             })
             .ToList();
@@ -75,7 +77,7 @@ public class DeckServiceTests : IClassFixture<DatabaseFixture>
         result.UserId.Should().Be(userId);
         result.PlayerCards.Should().HaveCount(_maxDeckSize);
         result.Size().Should().Be(_maxDeckSize);
-        
+
         playerCardServiceMock.Verify(
             x => x.CreateStarterCards(userId, It.IsAny<Guid>()), 
             Times.Once);
@@ -93,7 +95,7 @@ public class DeckServiceTests : IClassFixture<DatabaseFixture>
         };
         var gameSettingsOptions = Options.Create(gameSettings);
         var service = new DeckService(context, playerCardServiceMock.Object, gameSettingsOptions);
-        
+
         var userId = Guid.NewGuid();
         var invalidCards = new List<PlayerCard>
         {
@@ -111,11 +113,13 @@ public class DeckServiceTests : IClassFixture<DatabaseFixture>
                     Rarity = CardRarity.Common,
                     Type = CardType.Troop,
                     Damage = 100,
-                    Targets = [CardTarget.Ground],
+                    UnitClass = UnitClass.Ground,
+                    Targets = [UnitClass.Ground],
                     Hp = 300,
                     Range = 1,
                     HitSpeed = 1.0f,
-                    MovementSpeed = MovementSpeed.Medium
+                    MovementSpeed = MovementSpeed.Medium,
+                    ImageUrl = "test.png"
                 }
             }
         };
@@ -145,20 +149,19 @@ public class DeckServiceTests : IClassFixture<DatabaseFixture>
         };
         var gameSettingsOptions = Options.Create(gameSettings);
         var service = new DeckService(context, playerCardServiceMock.Object, gameSettingsOptions);
-        
+
         var userId = Guid.NewGuid();
-        
+
         // Crear el usuario primero para satisfacer la foreign key
         var user = new User
         {
             Id = userId,
             Username = "testuser",
             Email = "test@example.com",
-            PasswordHash = "password123"
         };
         context.Users.Add(user);
         await context.SaveChangesAsync();
-        
+
         var deck = new Deck(_maxDeckSize)
         {
             Id = Guid.NewGuid(),
@@ -188,7 +191,7 @@ public class DeckServiceTests : IClassFixture<DatabaseFixture>
         };
         var gameSettingsOptions = Options.Create(gameSettings);
         var service = new DeckService(context, playerCardServiceMock.Object, gameSettingsOptions);
-        
+
         var userId = Guid.NewGuid();
 
         var act = async () => await service.GetDeckByUserId(userId);

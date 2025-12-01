@@ -8,11 +8,11 @@ on:
 
 env:
   AWS_REGION: us-east-2
-  ECR_REPOSITORY: primitive-clash/backend
-  ECS_CLUSTER: primitive-clash-cluster
-  ECS_SERVICE: primitive-clash-backend-service
-  ECS_TASK_DEFINITION: primitive-clash-backend-task
-  CONTAINER_NAME: primitive-clash-backend
+  ECR_REPOSITORY: primitive-clash/game
+  ECS_CLUSTER: primitive-clash-cluster-v2
+  ECS_SERVICE: primitive-clash-service
+  ECS_TASK_DEFINITION: primitive-clash-task
+  CONTAINER_NAME: primitive-clash-container
 
 jobs:
   test:
@@ -29,13 +29,13 @@ jobs:
           dotnet-version: "9.0.x"
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore primitive-clash-backend.sln
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build primitive-clash-backend.sln --configuration Release --no-restore
 
-      # - name: Run tests
-      #   run: dotnet test --configuration Release --no-build --verbosity normal
+      - name: Run tests
+        run: echo "Tests skipped for now"
 
   build-and-push:
     name: Build and Push Docker Image

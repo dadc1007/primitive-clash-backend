@@ -25,7 +25,7 @@ public class PlayerCardTests
                 Rarity = CardRarity.Common,
                 Type = CardType.Troop,
                 Damage = 100,
-                Targets = [CardTarget.Ground],
+                Targets = [UnitClass.Ground],
                 Hp = 300,
                 Range = 1,
                 HitSpeed = 1.0f,

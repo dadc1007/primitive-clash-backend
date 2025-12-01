@@ -1,12 +1,11 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using PrimitiveClash.Backend.Configuration;
+using Moq;
 using PrimitiveClash.Backend.Data;
-using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Models.Cards;
 using PrimitiveClash.Backend.Models.Enums;
+using PrimitiveClash.Backend.Services;
 using PrimitiveClash.Backend.Services.Impl;
 using PrimitiveClash.Backend.Tests.Infrastructure;
 using Xunit;
@@ -16,7 +15,6 @@ namespace PrimitiveClash.Backend.Tests.Services;
 public class PlayerCardServiceTests : IClassFixture<DatabaseFixture>
 {
     private readonly DatabaseFixture _fixture;
-    private readonly List<string> _starterCardNames = ["Card1", "Card2", "Card3"];
 
     public PlayerCardServiceTests(DatabaseFixture fixture)
     {
@@ -29,39 +27,38 @@ public class PlayerCardServiceTests : IClassFixture<DatabaseFixture>
     public async Task CreateStarterCards_WithAllCardsAvailable_ShouldCreatePlayerCards()
     {
         using var context = _fixture.CreateContext();
-        var gameSettings = new GameSettings 
-        { 
-            StarterCardNames = _starterCardNames,
-            MaxDeckSize = 8
-        };
-        var gameSettingsOptions = Options.Create(gameSettings);
-        var service = new PlayerCardService(context, gameSettingsOptions);
-        
+        var cardServiceMock = new Mock<ICardService>();
+        var service = new PlayerCardService(context, cardServiceMock.Object);
+
         var userId = Guid.NewGuid();
         var deckId = Guid.NewGuid();
 
-        var cards = _starterCardNames.Select(name => new TroopCard
+        var cards = new List<Card>
         {
-            Id = Guid.NewGuid(),
-            Name = name,
-            ElixirCost = 3,
-            Rarity = CardRarity.Common,
-            Type = CardType.Troop,
-            Damage = 100,
-            Targets = [CardTarget.Ground],
-            Hp = 300,
-            Range = 1,
-            HitSpeed = 1.0f,
-            MovementSpeed = MovementSpeed.Medium
-        }).ToList();
+            new TroopCard
+            {
+                Id = Guid.NewGuid(),
+                Name = "Card1",
+                ElixirCost = 3,
+                Rarity = CardRarity.Common,
+                Type = CardType.Troop,
+                Damage = 100,
+                UnitClass = UnitClass.Ground,
+                Targets = [UnitClass.Ground],
+                Hp = 300,
+                Range = 1,
+                HitSpeed = 1.0f,
+                MovementSpeed = MovementSpeed.Medium,
+                ImageUrl = "test.png"
+            }
+        };
 
-        context.Cards.AddRange(cards);
-        await context.SaveChangesAsync();
+        cardServiceMock.Setup(x => x.GetInitialCards()).ReturnsAsync(cards);
 
         var result = await service.CreateStarterCards(userId, deckId);
 
         result.Should().NotBeNull();
-        result.Should().HaveCount(_starterCardNames.Count);
+        result.Should().HaveCount(1);
         result.Should().AllSatisfy(pc =>
         {
             pc.UserId.Should().Be(userId);
@@ -71,41 +68,23 @@ public class PlayerCardServiceTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
-    public async Task CreateStarterCards_WithMissingCards_ShouldThrowCardsMissingException()
+    public async Task CreateStarterCards_WithEmptyCards_ShouldReturnEmptyList()
     {
         using var context = _fixture.CreateContext();
-        var gameSettings = new GameSettings 
-        { 
-            StarterCardNames = _starterCardNames,
-            MaxDeckSize = 8
-        };
-        var gameSettingsOptions = Options.Create(gameSettings);
-        var service = new PlayerCardService(context, gameSettingsOptions);
-        
+        var cardServiceMock = new Mock<ICardService>();
+        var service = new PlayerCardService(context, cardServiceMock.Object);
+
         var userId = Guid.NewGuid();
         var deckId = Guid.NewGuid();
 
-        var card = new TroopCard
-        {
-            Id = Guid.NewGuid(),
-            Name = "Card1",
-            ElixirCost = 3,
-            Rarity = CardRarity.Common,
-            Type = CardType.Troop,
-            Damage = 100,
-            Targets = [CardTarget.Ground],
-            Hp = 300,
-            Range = 1,
-            HitSpeed = 1.0f,
-            MovementSpeed = MovementSpeed.Medium
-        };
+        var cards = new List<Card>();
 
-        context.Cards.Add(card);
-        await context.SaveChangesAsync();
+        cardServiceMock.Setup(x => x.GetInitialCards()).ReturnsAsync(cards);
 
-        var act = async () => await service.CreateStarterCards(userId, deckId);
+        var result = await service.CreateStarterCards(userId, deckId);
 
-        await act.Should().ThrowAsync<CardsMissingException>();
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
     }
 
     #endregion

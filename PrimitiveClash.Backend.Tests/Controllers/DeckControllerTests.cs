@@ -46,7 +46,7 @@ public class DeckControllerTests
         // Assert
         result.Should().BeOfType<OkObjectResult>();
         var okResult = result as OkObjectResult;
-        
+
         var response = okResult!.Value as DeckResponse;
         response.Should().NotBeNull();
         response!.DeckId.Should().Be(expectedDeck.Id);
@@ -93,7 +93,7 @@ public class DeckControllerTests
 
         result.Should().BeOfType<OkObjectResult>();
         var okResult = result as OkObjectResult;
-        
+
         var response = okResult!.Value as DeckResponse;
         response.Should().NotBeNull();
         response!.Cards.Should().BeEmpty();

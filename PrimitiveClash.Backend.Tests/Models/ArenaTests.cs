@@ -25,7 +25,8 @@ public class ArenaTests
             Type = TowerType.Leader,
             Hp = 1000,
             Damage = 100,
-            Range = 5
+            Range = 5,
+            Size = 4
         };
 
         var guardianTemplate = new TowerTemplate
@@ -34,21 +35,22 @@ public class ArenaTests
             Type = TowerType.Guardian,
             Hp = 500,
             Damage = 50,
-            Range = 3
+            Range = 3,
+            Size = 3
         };
 
         var player1Towers = new List<Tower>
         {
-            new Tower(leaderTemplate, player1Id),
-            new Tower(guardianTemplate, player1Id),
-            new Tower(guardianTemplate, player1Id)
+            new Tower(player1Id, leaderTemplate),
+            new Tower(player1Id, guardianTemplate),
+            new Tower(player1Id, guardianTemplate)
         };
 
         var player2Towers = new List<Tower>
         {
-            new Tower(leaderTemplate, player2Id),
-            new Tower(guardianTemplate, player2Id),
-            new Tower(guardianTemplate, player2Id)
+            new Tower(player2Id, leaderTemplate),
+            new Tower(player2Id, guardianTemplate),
+            new Tower(player2Id, guardianTemplate)
         };
 
         var towers = new Dictionary<Guid, List<Tower>>
@@ -127,7 +129,7 @@ public class ArenaTests
         {
             for (int c = 0; c < 18; c++)
             {
-                if (arena.Grid[r][c].Tower != null)
+                if (arena.Grid[r][c].Tower)
                 {
                     towersPlaced++;
                 }
@@ -142,20 +144,20 @@ public class ArenaTests
     {
         var arena = CreateTestArena();
 
-        var leaderFound = false;
+        var towerFound = false;
         for (int r = 0; r <= 3; r++)
         {
             for (int c = 7; c <= 10; c++)
             {
-                if (arena.Grid[r][c].Tower?.TowerTemplate.Type == TowerType.Leader)
+                if (arena.Grid[r][c].Tower)
                 {
-                    leaderFound = true;
+                    towerFound = true;
                     break;
                 }
             }
         }
 
-        leaderFound.Should().BeTrue();
+        towerFound.Should().BeTrue();
     }
 
     [Fact]
@@ -163,20 +165,20 @@ public class ArenaTests
     {
         var arena = CreateTestArena();
 
-        var leaderFound = false;
+        var towerFound = false;
         for (int r = 26; r <= 29; r++)
         {
             for (int c = 7; c <= 10; c++)
             {
-                if (arena.Grid[r][c].Tower?.TowerTemplate.Type == TowerType.Leader)
+                if (arena.Grid[r][c].Tower)
                 {
-                    leaderFound = true;
+                    towerFound = true;
                     break;
                 }
             }
         }
 
-        leaderFound.Should().BeTrue();
+        towerFound.Should().BeTrue();
     }
 
     [Fact]

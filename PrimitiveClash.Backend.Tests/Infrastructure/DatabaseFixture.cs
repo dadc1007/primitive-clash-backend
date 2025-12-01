@@ -20,11 +20,11 @@ public class DatabaseFixture : IAsyncLifetime
             .Options;
 
         var context = new AppDbContext(options);
-        
+
         // Limpiar la base de datos antes de cada uso
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
-        
+
         return context;
     }
 

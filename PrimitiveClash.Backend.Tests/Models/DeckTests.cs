@@ -27,7 +27,7 @@ public class DeckTests
                 Rarity = CardRarity.Common,
                 Type = CardType.Troop,
                 Damage = 100,
-                Targets = [CardTarget.Ground],
+                Targets = [UnitClass.Ground],
                 Hp = 300,
                 Range = 1,
                 HitSpeed = 1.0f,
@@ -57,7 +57,7 @@ public class DeckTests
     public void AddCard_WhenDeckIsFull_ShouldThrowInvalidDeckSizeException()
     {
         var deck = new Deck(MaxDeckSize) { UserId = Guid.NewGuid() };
-        
+
         for (int i = 0; i < MaxDeckSize; i++)
         {
             deck.AddCard(CreateTestPlayerCard());
