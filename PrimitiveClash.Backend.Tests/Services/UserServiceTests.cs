@@ -1,102 +1,109 @@
-// using FluentAssertions;
-// using Microsoft.EntityFrameworkCore;
-// using Moq;
-// using PrimitiveClash.Backend.Data;
-// using PrimitiveClash.Backend.Exceptions;
-// using PrimitiveClash.Backend.Models;
-// using PrimitiveClash.Backend.Services;
-// using PrimitiveClash.Backend.Services.Impl;
-// using PrimitiveClash.Backend.Tests.Infrastructure;
-// using Xunit;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Moq;
+using PrimitiveClash.Backend.Data;
+using PrimitiveClash.Backend.Models;
+using PrimitiveClash.Backend.Services;
+using PrimitiveClash.Backend.Services.Impl;
+using PrimitiveClash.Backend.Tests.Infrastructure;
+using Xunit;
 
-// namespace PrimitiveClash.Backend.Tests.Services;
+namespace PrimitiveClash.Backend.Tests.Services;
 
-// public class UserServiceTests : IClassFixture<DatabaseFixture>
-// {
-//     private readonly DatabaseFixture _fixture;
+public class UserServiceTests : IClassFixture<DatabaseFixture>
+{
+    private readonly DatabaseFixture _fixture;
 
-//     public UserServiceTests(DatabaseFixture fixture)
-//     {
-//         _fixture = fixture;
-//     }
+    public UserServiceTests(DatabaseFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
-//     #region RegisterUser Tests
+    [Fact]
+    public async Task GetOrCreateUser_ExistingUser_ReturnsUser()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
 
-//     [Fact]
-//     public async Task RegisterUser_WithValidData_ShouldCreateUserAndDeck()
-//     {
-//         using var context = _fixture.CreateContext();
-//         var deckServiceMock = new Mock<IDeckService>();
-//         var service = new UserService(context, deckServiceMock.Object);
+        var userId = Guid.NewGuid();
+        var oid = userId.ToString();
+        var email = "test@example.com";
 
-//         var username = "newuser";
-//         var email = "new@example.com";
-//         var password = "password123";
-//         var mockDeck = new Deck(8) { Id = Guid.NewGuid(), UserId = Guid.NewGuid() };
+        var existingUser = new User
+        {
+            Id = userId,
+            Username = "test",
+            Email = email
+        };
 
-//         deckServiceMock
-//             .Setup(x => x.InitializeDeck(It.IsAny<Guid>()))
-//             .ReturnsAsync(mockDeck);
+        context.Users.Add(existingUser);
+        await context.SaveChangesAsync();
 
-//         var result = await service.RegisterUser(username, email, password);
+        var result = await service.GetOrCreateUser(oid, email);
 
-//         result.Should().NotBeNull();
-//         result.Username.Should().Be(username);
-//         result.Email.Should().Be(email);
-//         result.PasswordHash.Should().Be(password);
-//         result.Deck.Should().NotBeNull();
+        result.Should().NotBeNull();
+        result.Id.Should().Be(userId);
+        result.Email.Should().Be(email);
+        result.Username.Should().Be("test");
 
-//         deckServiceMock.Verify(x => x.InitializeDeck(It.IsAny<Guid>()), Times.Once);
+        deckServiceMock.Verify(d => d.InitializeDeck(It.IsAny<Guid>()), Times.Never);
+    }
 
-//         var savedUser = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
-//         savedUser.Should().NotBeNull();
-//     }
+    [Fact]
+    public async Task GetOrCreateUser_NewUser_CreatesUserWithUsernameFromEmail()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
 
-//     [Fact]
-//     public async Task RegisterUser_WithExistingUsername_ShouldThrowUsernameExistsException()
-//     {
-//         using var context = _fixture.CreateContext();
-//         var deckServiceMock = new Mock<IDeckService>();
-//         var service = new UserService(context, deckServiceMock.Object);
+        var oid = Guid.NewGuid().ToString();
+        var email = "newuser@example.com";
+        var expectedUsername = "newuser";
 
-//         var existingUser = new User
-//         {
-//             Id = Guid.NewGuid(),
-//             Username = "existinguser",
-//             Email = "existing@example.com",
-//             PasswordHash = "password123"
-//         };
+        var result = await service.GetOrCreateUser(oid, email);
 
-//         context.Users.Add(existingUser);
-//         await context.SaveChangesAsync();
+        result.Should().NotBeNull();
+        result.Email.Should().Be(email);
+        result.Username.Should().Be(expectedUsername);
+        result.Id.ToString().Should().Be(oid);
 
-//         var act = async () => await service.RegisterUser("existinguser", "new@example.com", "password123");
+        deckServiceMock.Verify(d => d.InitializeDeck(It.Is<Guid>(id => id.ToString() == oid)), Times.Once);
 
-//         await act.Should().ThrowAsync<UsernameExistsException>();
-//     }
+        var savedUser = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        savedUser.Should().NotBeNull();
+        savedUser!.Username.Should().Be(expectedUsername);
+    }
 
-//     [Fact]
-//     public async Task RegisterUser_WithExistingEmail_ShouldThrowEmailExistsException()
-//     {
-//         using var context = _fixture.CreateContext();
-//         var deckServiceMock = new Mock<IDeckService>();
-//         var service = new UserService(context, deckServiceMock.Object);
+    [Fact]
+    public async Task GetOrCreateUser_NewUserWithComplexEmail_ExtractsCorrectUsername()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
 
-//         var existingUser = new User
-//         {
-//             Id = Guid.NewGuid(),
-//             Username = "existinguser",
-//             Email = "existing@example.com",
-//             PasswordHash = "password123"
-//         };
+        var oid = Guid.NewGuid().ToString();
+        var email = "john.doe+test@company.co.uk";
+        var expectedUsername = "john.doe+test";
 
-//         context.Users.Add(existingUser);
-//         await context.SaveChangesAsync();
+        var result = await service.GetOrCreateUser(oid, email);
 
-//         var act = async () => await service.RegisterUser("newuser", "existing@example.com", "password123");
+        result.Username.Should().Be(expectedUsername);
+    }
 
-//         await act.Should().ThrowAsync<EmailExistsException>();
-//     }
+    [Fact]
+    public async Task GetOrCreateUser_NewUser_InitializesDeck()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
 
-//     #endregion
-// }
+        var userId = Guid.NewGuid();
+        var oid = userId.ToString();
+        var email = "test@example.com";
+
+        await service.GetOrCreateUser(oid, email);
+
+        deckServiceMock.Verify(d => d.InitializeDeck(userId), Times.Once);
+    }
+}
