@@ -1,208 +1,231 @@
-// using FluentAssertions;
-// using Microsoft.AspNetCore.Http;
-// using Microsoft.AspNetCore.Mvc;
-// using Moq;
-// using PrimitiveClash.Backend.Controllers;
-// using PrimitiveClash.Backend.DTOs.Auth.Requests;
-// using PrimitiveClash.Backend.DTOs.Auth.Responses;
-// using PrimitiveClash.Backend.Exceptions;
-// using PrimitiveClash.Backend.Models;
-// using PrimitiveClash.Backend.Services;
-// using Xunit;
+using FluentAssertions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
+using PrimitiveClash.Backend.Controllers;
+using PrimitiveClash.Backend.Models;
+using PrimitiveClash.Backend.Services;
+using System.Security.Claims;
+using Xunit;
 
-// namespace PrimitiveClash.Backend.Tests.Controllers;
+namespace PrimitiveClash.Backend.Tests.Controllers;
 
-// public class AuthControllerTests
-// {
-//     private readonly Mock<IAuthService> _authServiceMock;
-//     private readonly AuthController _controller;
+public class AuthControllerTests
+{
+    private readonly Mock<IUserService> _mockUserService;
+    private readonly AuthController _controller;
 
-//     public AuthControllerTests()
-//     {
-//         _authServiceMock = new Mock<IAuthService>();
-//         _controller = new AuthController(_authServiceMock.Object);
-//     }
+    public AuthControllerTests()
+    {
+        _mockUserService = new Mock<IUserService>();
+        _controller = new AuthController(_mockUserService.Object);
+    }
 
-//     #region SignUp Tests
+    [Fact]
+    public async Task UpsertUser_WithValidToken_ReturnsOkWithUserData()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var oid = userId.ToString();
+        var email = "test@example.com";
 
-//     [Fact]
-//     public async Task SignUp_WithValidData_ShouldReturnCreatedResult()
-//     {
-//         // Arrange
-//         var request = new SignupRequest("testuser", "test@example.com", "SecurePassword123!");
+        var claims = new List<Claim>
+        {
+            new Claim("oid", oid),
+            new Claim("preferred_username", email)
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
 
-//         var expectedUser = new User
-//         {
-//             Id = Guid.NewGuid(),
-//             Username = request.Username,
-//             Email = request.Email,
-//             PasswordHash = "hashedPassword123"
-//         };
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
 
-//         _authServiceMock
-//             .Setup(x => x.RegisterUser(request.Username, request.Email, request.Password))
-//             .ReturnsAsync(expectedUser);
+        var user = new User
+        {
+            Id = userId,
+            Username = "test",
+            Email = email
+        };
 
-//         // Act
-//         var result = await _controller.SignUp(request);
+        _mockUserService.Setup(s => s.GetOrCreateUser(oid, email))
+            .ReturnsAsync(user);
 
-//         // Assert
-//         result.Should().BeOfType<ObjectResult>();
-//         var objectResult = result as ObjectResult;
-//         objectResult!.StatusCode.Should().Be(StatusCodes.Status201Created);
+        // Act
+        var result = await _controller.UpsertUser();
 
-//         var response = objectResult.Value as AuthSuccessResponse;
-//         response.Should().NotBeNull();
-//         response!.Username.Should().Be(request.Username);
-//         response.Email.Should().Be(request.Email);
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+        var okResult = result as OkObjectResult;
+        okResult!.Value.Should().NotBeNull();
+        
+        _mockUserService.Verify(s => s.GetOrCreateUser(oid, email), Times.Once);
+    }
 
-//         _authServiceMock.Verify(
-//             x => x.RegisterUser(request.Username, request.Email, request.Password),
-//             Times.Once);
-//     }
+    [Fact]
+    public async Task UpsertUser_WithMissingOid_ReturnsBadRequest()
+    {
+        // Arrange
+        var claims = new List<Claim>
+        {
+            new Claim("preferred_username", "test@example.com")
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
 
-//     [Fact]
-//     public async Task SignUp_WithExistingUsername_ShouldReturnConflict()
-//     {
-//         var request = new SignupRequest("existinguser", "newemail@example.com", "SecurePassword123!");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
 
-//         _authServiceMock
-//             .Setup(x => x.RegisterUser(request.Username, request.Email, request.Password))
-//             .ThrowsAsync(new UsernameExistsException("Username already exists"));
+        // Act
+        var result = await _controller.UpsertUser();
 
-//         var result = await _controller.SignUp(request);
+        // Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+        var badRequest = result as BadRequestObjectResult;
+        badRequest!.Value.Should().NotBeNull();
+        
+        _mockUserService.Verify(s => s.GetOrCreateUser(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
 
-//         result.Should().BeOfType<ConflictObjectResult>();
-//         var conflictResult = result as ConflictObjectResult;
-//         conflictResult!.Value.Should().NotBeNull();
-//     }
+    [Fact]
+    public async Task UpsertUser_WithMissingEmail_ReturnsBadRequest()
+    {
+        // Arrange
+        var oid = Guid.NewGuid().ToString();
+        var claims = new List<Claim>
+        {
+            new Claim("oid", oid)
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
 
-//     [Fact]
-//     public async Task SignUp_WithExistingEmail_ShouldReturnConflict()
-//     {
-//         var request = new SignupRequest("newuser", "existing@example.com", "SecurePassword123!");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
 
-//         _authServiceMock
-//             .Setup(x => x.RegisterUser(request.Username, request.Email, request.Password))
-//             .ThrowsAsync(new EmailExistsException("Email already exists"));
+        // Act
+        var result = await _controller.UpsertUser();
 
-//         var result = await _controller.SignUp(request);
+        // Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+        var badRequest = result as BadRequestObjectResult;
+        badRequest!.Value.Should().NotBeNull();
+        
+        _mockUserService.Verify(s => s.GetOrCreateUser(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
 
-//         result.Should().BeOfType<ConflictObjectResult>();
-//         var conflictResult = result as ConflictObjectResult;
-//         conflictResult!.Value.Should().NotBeNull();
-//     }
+    [Fact]
+    public async Task UpsertUser_WithEmptyOid_ReturnsBadRequest()
+    {
+        // Arrange
+        var claims = new List<Claim>
+        {
+            new Claim("oid", ""),
+            new Claim("preferred_username", "test@example.com")
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
 
-//     [Fact]
-//     public async Task SignUp_WithUnexpectedException_ShouldReturnInternalServerError()
-//     {
-//         var request = new SignupRequest("testuser", "test@example.com", "SecurePassword123!");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
 
-//         _authServiceMock
-//             .Setup(x => x.RegisterUser(request.Username, request.Email, request.Password))
-//             .ThrowsAsync(new Exception("Database connection failed"));
+        // Act
+        var result = await _controller.UpsertUser();
 
-//         var result = await _controller.SignUp(request);
+        // Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
 
-//         result.Should().BeOfType<ObjectResult>();
-//         var objectResult = result as ObjectResult;
-//         objectResult!.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-//     }
+    [Fact]
+    public async Task UpsertUser_WithEmptyEmail_ReturnsBadRequest()
+    {
+        // Arrange
+        var oid = Guid.NewGuid().ToString();
+        var claims = new List<Claim>
+        {
+            new Claim("oid", oid),
+            new Claim("preferred_username", "")
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
 
-//     #endregion
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
 
-//     #region Login Tests
+        // Act
+        var result = await _controller.UpsertUser();
 
-//     [Fact]
-//     public async Task Login_WithValidCredentials_ShouldReturnOkResult()
-//     {
-//         var request = new LoginRequest("test@example.com", "SecurePassword123!");
+        // Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
 
-//         var expectedUser = new User
-//         {
-//             Id = Guid.NewGuid(),
-//             Username = "testuser",
-//             Email = request.Email,
-//             PasswordHash = "hashedPassword123"
-//         };
+    [Fact]
+    public async Task UpsertUser_WhenUnauthorizedAccessException_ReturnsUnauthorized()
+    {
+        // Arrange
+        var oid = Guid.NewGuid().ToString();
+        var email = "test@example.com";
 
-//         _authServiceMock
-//             .Setup(x => x.LoginUser(request.Email, request.Password))
-//             .ReturnsAsync(expectedUser);
+        var claims = new List<Claim>
+        {
+            new Claim("oid", oid),
+            new Claim("preferred_username", email)
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
 
-//         var result = await _controller.Login(request);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
 
-//         result.Should().BeOfType<OkObjectResult>();
-//         var okResult = result as OkObjectResult;
+        _mockUserService.Setup(s => s.GetOrCreateUser(oid, email))
+            .ThrowsAsync(new UnauthorizedAccessException("Unauthorized"));
 
-//         var response = okResult!.Value as AuthSuccessResponse;
-//         response.Should().NotBeNull();
-//         response!.Email.Should().Be(request.Email);
+        // Act
+        var result = await _controller.UpsertUser();
 
-//         _authServiceMock.Verify(
-//             x => x.LoginUser(request.Email, request.Password),
-//             Times.Once);
-//     }
+        // Assert
+        result.Should().BeOfType<UnauthorizedObjectResult>();
+    }
 
-//     [Fact]
-//     public async Task Login_WithInvalidCredentials_ShouldReturnUnauthorized()
-//     {
-//         var request = new LoginRequest("test@example.com", "WrongPassword");
+    [Fact]
+    public async Task UpsertUser_WhenUnexpectedException_ReturnsInternalServerError()
+    {
+        // Arrange
+        var oid = Guid.NewGuid().ToString();
+        var email = "test@example.com";
 
-//         _authServiceMock
-//             .Setup(x => x.LoginUser(request.Email, request.Password))
-//             .ThrowsAsync(new InvalidCredentialsException());
+        var claims = new List<Claim>
+        {
+            new Claim("oid", oid),
+            new Claim("preferred_username", email)
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
 
-//         var result = await _controller.Login(request);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
 
-//         result.Should().BeOfType<UnauthorizedObjectResult>();
-//         var unauthorizedResult = result as UnauthorizedObjectResult;
-//         unauthorizedResult!.Value.Should().NotBeNull();
-//     }
+        _mockUserService.Setup(s => s.GetOrCreateUser(oid, email))
+            .ThrowsAsync(new Exception("Unexpected error"));
 
-//     [Fact]
-//     public async Task Login_WithUnexpectedException_ShouldReturnInternalServerError()
-//     {
-//         var request = new LoginRequest("test@example.com", "SecurePassword123!");
+        // Act
+        var result = await _controller.UpsertUser();
 
-//         _authServiceMock
-//             .Setup(x => x.LoginUser(request.Email, request.Password))
-//             .ThrowsAsync(new Exception("Database connection failed"));
-
-//         var result = await _controller.Login(request);
-
-//         result.Should().BeOfType<ObjectResult>();
-//         var objectResult = result as ObjectResult;
-//         objectResult!.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-//     }
-
-//     [Theory]
-//     [InlineData("user1@example.com", "Password123")]
-//     [InlineData("user2@example.com", "Password456")]
-//     [InlineData("user3@example.com", "Password789")]
-//     public async Task Login_WithMultipleValidUsers_ShouldReturnOkResult(string email, string password)
-//     {
-//         var request = new LoginRequest(email, password);
-
-//         var expectedUser = new User
-//         {
-//             Id = Guid.NewGuid(),
-//             Username = email.Split('@')[0],
-//             Email = email,
-//             PasswordHash = "hashedPassword"
-//         };
-
-//         _authServiceMock
-//             .Setup(x => x.LoginUser(email, password))
-//             .ReturnsAsync(expectedUser);
-
-//         var result = await _controller.Login(request);
-
-//         result.Should().BeOfType<OkObjectResult>();
-//         var okResult = result as OkObjectResult;
-//         var response = okResult!.Value as AuthSuccessResponse;
-//         response!.Email.Should().Be(email);
-//     }
-
-//     #endregion
-// }
+        // Assert
+        result.Should().BeOfType<ObjectResult>();
+        var objectResult = result as ObjectResult;
+        objectResult!.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+    }
+}
