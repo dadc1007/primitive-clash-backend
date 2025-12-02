@@ -1,4 +1,4 @@
-name: Trigger auto deployment for primitiveclash-backend-dev
+name: Trigger auto deployment for primitive-clash-app
 
 # When this action will be executed
 on:
@@ -8,7 +8,7 @@ on:
       [ develop ]
     paths:
     - '**'
-    - '.github/workflows/primitiveclash-backend-dev-AutoDeployTrigger-18f46c31-f209-4c87-9a9a-31d0dd2da567.yml'
+    - '.github/workflows/primitive-clash-app-AutoDeployTrigger-ac3cd908-f623-4331-a30c-ae0006e03865.yml'
 
   # Allow manual trigger 
   workflow_dispatch:      
@@ -27,9 +27,9 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.PRIMITIVECLASHBACKENDDEV_AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.PRIMITIVECLASHBACKENDDEV_AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.PRIMITIVECLASHBACKENDDEV_AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.PRIMITIVECLASHAPP_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.PRIMITIVECLASHAPP_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.PRIMITIVECLASHAPP_AZURE_SUBSCRIPTION_ID }}
 
       - name: Build and push container image to registry
         uses: azure/container-apps-deploy-action@v2
@@ -37,12 +37,12 @@ jobs:
           appSourcePath: ${{ github.workspace }}
           _dockerfilePathKey_: _dockerfilePath_
           _targetLabelKey_: _targetLabel_
-          registryUrl: primitiveclashdevacr.azurecr.io
-          registryUsername: ${{ secrets.PRIMITIVECLASHBACKENDDEV_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.PRIMITIVECLASHBACKENDDEV_REGISTRY_PASSWORD }}
-          containerAppName: primitiveclash-backend-dev
-          resourceGroup: primitiveclash-dev
-          imageToBuild: primitiveclashdevacr.azurecr.io/primitiveclash-backend-dev:${{ github.sha }}
+          registryUrl: primitiveclashacr.azurecr.io
+          registryUsername: ${{ secrets.PRIMITIVECLASHAPP_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.PRIMITIVECLASHAPP_REGISTRY_PASSWORD }}
+          containerAppName: primitive-clash-app
+          resourceGroup: primitive-clash-rg
+          imageToBuild: primitiveclashacr.azurecr.io/primitive-clash-app:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
 

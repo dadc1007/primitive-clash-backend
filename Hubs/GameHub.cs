@@ -60,8 +60,8 @@ namespace PrimitiveClash.Backend.Hubs
                     .SendAsync(
                         "Hand",
                         PlayerHandNotificationMapper.ToPlayerHandNotification(
-                            game.GameArena,
-                            _gameService.GetPlayerState(game, userId)
+                            updatedGame.GameArena,
+                            _gameService.GetPlayerState(updatedGame, userId)
                         )
                     );
 
@@ -82,12 +82,13 @@ namespace PrimitiveClash.Backend.Hubs
                     "Failed to join game due to concurrent connection attempt. Please try again."
                 );
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 await Clients.Caller.SendAsync(
                     "Error",
                     "An unexpected error occurred while joining the game."
                 );
+                _logger.LogError(e, "An unexpected error occurred while joining the game.");
             }
         }
 
