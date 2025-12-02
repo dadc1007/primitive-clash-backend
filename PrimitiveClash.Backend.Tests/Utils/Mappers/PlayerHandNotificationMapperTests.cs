@@ -115,7 +115,7 @@ public class PlayerHandNotificationMapperTests
         };
 
         var playerCards = CreateTestPlayerCards(user.Id, 9); // 4 en mano + 5 en cola
-        var playerState = new PlayerState(user.Id, playerCards);
+        var playerState = new PlayerState(user.Id, user.Username, playerCards);
 
         var arena = CreateTestArena();
 
@@ -141,7 +141,7 @@ public class PlayerHandNotificationMapperTests
         };
 
         var playerCards = CreateTestPlayerCards(user.Id, 9);
-        var playerState = new PlayerState(user.Id, playerCards);
+        var playerState = new PlayerState(user.Id, user.Username, playerCards);
 
         var arena = CreateTestArena();
 
