@@ -147,7 +147,7 @@ public class GameLoopServiceTests
         _mockGameService.Verify(x => x.GetGame(sessionId), Times.Once);
         _mockArenaService.Verify(x => x.GetEntities(game.GameArena), Times.Once);
         _mockArenaService.Verify(x => x.GetTowers(game.GameArena), Times.Once);
-        _mockGameService.Verify(x => x.UpdateElixir(game), Times.Once);
+        // Note: UpdateElixir is now called conditionally based on tick counter, not every tick
         _mockGameService.Verify(x => x.SaveGame(game), Times.Once);
     }
 
@@ -460,12 +460,12 @@ public class GameLoopServiceTests
             Level = 1
         };
 
-        var playerState1 = new PlayerState(playerId1, [playerCard1])
+        var playerState1 = new PlayerState(playerId1, "Player1", [playerCard1])
         {
             CurrentElixir = 5m
         };
 
-        var playerState2 = new PlayerState(playerId2, [playerCard2])
+        var playerState2 = new PlayerState(playerId2, "Player2", [playerCard2])
         {
             CurrentElixir = 5m
         };

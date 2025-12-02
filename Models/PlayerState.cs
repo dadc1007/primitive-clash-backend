@@ -1,17 +1,20 @@
 using PrimitiveClash.Backend.Exceptions;
+using PrimitiveClash.Backend.Models.Enums;
 
 namespace PrimitiveClash.Backend.Models
 {
-    public class PlayerState(Guid id, List<PlayerCard> cards)
+    public class PlayerState(Guid id, string username, List<PlayerCard> cards)
     {
         private readonly object _lock = new();
-        
+
         public Guid Id { get; set; } = id;
+        public string Username { get; set; } = username;
         public bool IsConnected { get; set; } = false;
-        
+
         public string? ConnectionId { get; set; }
         public List<PlayerCard> Cards { get; set; } = cards;
         public decimal CurrentElixir { get; set; } = 5.0m;
+        public ArenaPosition ArenaPosition { get; set; }
 
         public void PlayCard(Guid cardId)
         {
@@ -31,7 +34,7 @@ namespace PrimitiveClash.Backend.Models
         {
             return Cards[4];
         }
-        
+
         public object GetLock() => _lock;
     }
 }

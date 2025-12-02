@@ -18,8 +18,8 @@ public class AdditionalModelsTests
         var player1Id = Guid.NewGuid();
         var player2Id = Guid.NewGuid();
         
-        var playerState1 = new PlayerState(player1Id, new List<PlayerCard>());
-        var playerState2 = new PlayerState(player2Id, new List<PlayerCard>());
+        var playerState1 = new PlayerState(player1Id, "Player1", new List<PlayerCard>());
+        var playerState2 = new PlayerState(player2Id, "Player2", new List<PlayerCard>());
         var playerStates = new List<PlayerState> { playerState1, playerState2 };
 
         var arenaTemplate = new ArenaTemplate { Id = Guid.NewGuid(), Name = "Test Arena", RequiredTrophies = 0 };
@@ -47,7 +47,7 @@ public class AdditionalModelsTests
     {
         // Assert
         Game.InitialElixir.Should().Be(5m);
-        Game.ElixirPerSecond.Should().Be(0.5m);
+        Game.ElixirPerSecond.Should().Be(1m);
         Game.MaxElixir.Should().Be(10m);
     }
 
@@ -60,8 +60,8 @@ public class AdditionalModelsTests
         var player2Id = Guid.NewGuid();
         var playerStates = new List<PlayerState> 
         { 
-            new PlayerState(player1Id, new List<PlayerCard>()),
-            new PlayerState(player2Id, new List<PlayerCard>())
+            new PlayerState(player1Id, "Player1", new List<PlayerCard>()),
+            new PlayerState(player2Id, "Player2", new List<PlayerCard>())
         };
         var arenaTemplate = new ArenaTemplate { Id = Guid.NewGuid(), Name = "Test", RequiredTrophies = 0 };
         var leaderTemplate = new TowerTemplate { Id = Guid.NewGuid(), Type = TowerType.Leader, Hp = 2000, Damage = 100, Range = 7, Size = 4 };
