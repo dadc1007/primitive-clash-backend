@@ -12,12 +12,14 @@ namespace PrimitiveClash.Backend.Tests.Services;
 public class PlayerStateServiceTests
 {
     private readonly Mock<IDeckService> _mockDeckService;
+    private readonly Mock<IUserService> _mockUserService;
     private readonly PlayerStateService _playerStateService;
 
     public PlayerStateServiceTests()
     {
         _mockDeckService = new Mock<IDeckService>();
-        _playerStateService = new PlayerStateService(_mockDeckService.Object);
+        _mockUserService = new Mock<IUserService>();
+        _playerStateService = new PlayerStateService(_mockDeckService.Object, _mockUserService.Object);
     }
 
     [Fact]

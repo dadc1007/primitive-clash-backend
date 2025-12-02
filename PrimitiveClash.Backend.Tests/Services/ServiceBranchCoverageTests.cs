@@ -137,7 +137,7 @@ public class ServiceBranchCoverageTests
             Health = 1000
         };
 
-        var playerState = new PlayerState(playerId, new List<PlayerCard> 
+        var playerState = new PlayerState(playerId, "Player1", new List<PlayerCard> 
         { 
             playerCard, cardToPut, playerCard, playerCard, playerCard 
         })

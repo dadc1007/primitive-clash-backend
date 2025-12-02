@@ -264,17 +264,21 @@ public class NotificationDtosTests
     {
         // Arrange
         var id = Guid.NewGuid();
+        var name = "Player1";
+        var arenaPosition = ArenaPosition.Top;
         var isConnected = true;
         var connectionId = "conn-123";
         var currentElixir = 7.5m;
 
         // Act
         var notification = new PlayerStateNotification(
-            id, isConnected, connectionId, currentElixir
+            id, name, arenaPosition, isConnected, connectionId, currentElixir
         );
 
         // Assert
         notification.Id.Should().Be(id);
+        notification.Name.Should().Be(name);
+        notification.ArenaPosition.Should().Be(arenaPosition);
         notification.IsConnected.Should().BeTrue();
         notification.ConnectionId.Should().Be(connectionId);
         notification.CurrentElixir.Should().Be(currentElixir);
@@ -285,10 +289,12 @@ public class NotificationDtosTests
     {
         // Arrange
         var id = Guid.NewGuid();
+        var name = "Player2";
+        var arenaPosition = ArenaPosition.Bottom;
 
         // Act
         var notification = new PlayerStateNotification(
-            id, false, null, 5.0m
+            id, name, arenaPosition, false, null, 5.0m
         );
 
         // Assert
@@ -302,12 +308,14 @@ public class NotificationDtosTests
     {
         // Arrange
         var id = Guid.NewGuid();
+        var name = "Player1";
+        var arenaPosition = ArenaPosition.Top;
 
         var notification1 = new PlayerStateNotification(
-            id, true, "conn-123", 7.5m
+            id, name, arenaPosition, true, "conn-123", 7.5m
         );
         var notification2 = new PlayerStateNotification(
-            id, true, "conn-123", 7.5m
+            id, name, arenaPosition, true, "conn-123", 7.5m
         );
 
         // Act & Assert

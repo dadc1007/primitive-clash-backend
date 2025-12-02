@@ -28,7 +28,7 @@ public class ArenaEntityFactoryTests
             Email = "test@example.com"
         };
 
-        return new PlayerState(userId, new List<PlayerCard>());
+        return new PlayerState(userId, user.Username, new List<PlayerCard>());
     }
 
     [Fact]
