@@ -9,8 +9,10 @@
 
   <PropertyGroup>
     <CollectCoverage>true</CollectCoverage>
-    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <CoverletOutputFormat>opencover</CoverletOutputFormat>
+    <CoverletOutput>./TestResults/coverage.opencover.xml</CoverletOutput>
     <ExcludeByFile>**/Migrations/**/*.cs,**/Program.cs</ExcludeByFile>
+    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
   </PropertyGroup>
 
   <ItemGroup>
