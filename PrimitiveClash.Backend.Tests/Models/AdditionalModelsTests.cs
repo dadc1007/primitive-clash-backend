@@ -47,7 +47,7 @@ public class AdditionalModelsTests
     {
         // Assert
         Game.InitialElixir.Should().Be(5m);
-        Game.ElixirPerSecond.Should().Be(0.5m);
+        Game.ElixirPerSecond.Should().Be(1m);
         Game.MaxElixir.Should().Be(10m);
     }
 

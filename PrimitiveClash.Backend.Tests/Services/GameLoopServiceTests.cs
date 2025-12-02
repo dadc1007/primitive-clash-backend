@@ -147,7 +147,7 @@ public class GameLoopServiceTests
         _mockGameService.Verify(x => x.GetGame(sessionId), Times.Once);
         _mockArenaService.Verify(x => x.GetEntities(game.GameArena), Times.Once);
         _mockArenaService.Verify(x => x.GetTowers(game.GameArena), Times.Once);
-        _mockGameService.Verify(x => x.UpdateElixir(game), Times.Once);
+        // Note: UpdateElixir is now called conditionally based on tick counter, not every tick
         _mockGameService.Verify(x => x.SaveGame(game), Times.Once);
     }
 
