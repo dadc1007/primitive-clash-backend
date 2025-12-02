@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     name: Build and analyze
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -23,48 +23,48 @@ jobs:
       - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
         with:
-          path: ~\sonar\cache
+          path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
       - name: Cache SonarQube Cloud scanner
         id: cache-sonar-scanner
         uses: actions/cache@v4
         with:
-          path: ${{ runner.temp }}\scanner
+          path: ./.sonar/scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
       - name: Install SonarQube Cloud scanner
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-        shell: powershell
+        shell: bash
         run: |
-          New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
+          mkdir -p ./.sonar/scanner
+          dotnet tool update dotnet-sonarscanner --tool-path ./.sonar/scanner
 
       - name: Pull PostgreSQL Docker image
-        shell: powershell
+        shell: bash
         run: docker pull postgres:15
 
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        shell: powershell
+        shell: bash
         run: |
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
-            /k:"dadc1007_primitivebackend" `
-            /o:"dadc1007" `
-            /d:sonar.host.url="https://sonarcloud.io" `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" `
-            /d:sonar.coverage.exclusions="**/Migrations/**,**/Program.cs,**/DTOs/**,**/Exceptions/**,**/Models/Enums/**,**/*Exception*.cs,**/PrimitiveClash.Backend.Tests/**" `
+          ./.sonar/scanner/dotnet-sonarscanner begin \
+            /k:"dadc1007_primitivebackend" \
+            /o:"dadc1007" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+            /d:sonar.coverage.exclusions="**/Migrations/**,**/Program.cs,**/DTOs/**,**/Exceptions/**,**/Models/Enums/**,**/*Exception*.cs,**/PrimitiveClash.Backend.Tests/**" \
             /d:sonar.exclusions="**/bin/**,**/obj/**,**/Migrations/**,**/*.Designer.cs,**/wwwroot/**"
 
           dotnet build primitive-clash-backend.sln --configuration Release
 
-          dotnet test primitive-clash-backend.sln `
-            --configuration Release `
-            --no-build `
-            --collect:"XPlat Code Coverage" `
-            --results-directory ./TestResults/ `
+          dotnet test primitive-clash-backend.sln \
+            --configuration Release \
+            --no-build \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults/ \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          ./.sonar/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
