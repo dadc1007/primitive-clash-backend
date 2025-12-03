@@ -71,8 +71,8 @@ public class GameTests
 
         return new List<PlayerState>
         {
-            new PlayerState(user1.Id, new List<PlayerCard>()),
-            new PlayerState(user2.Id, new List<PlayerCard>())
+            new PlayerState(user1.Id, user1.Username, new List<PlayerCard>()),
+            new PlayerState(user2.Id, user2.Username, new List<PlayerCard>())
         };
     }
 

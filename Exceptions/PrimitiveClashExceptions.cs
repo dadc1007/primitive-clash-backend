@@ -56,10 +56,12 @@ namespace PrimitiveClash.Backend.Exceptions
     public class CardTypeException(CardType type) : GameException($"Unsupported card type: {type}") { }
 
     public class EnemyTowersNotFoundException() : GameException("Enemy towers not found");
-    
+
     public class CardNotInHandException() : GameException("Card not in hand");
-    
+
     public class InvalidArenaSideException() : GameException("A card can be placed only in the player side arena");
-    
+
     public class CardNotFoundException() : GameException("Card not found");
+
+    public class UserNotFoundException(Guid userId) : GameException($"User with ID '{userId}' not found") { }
 }

@@ -460,12 +460,12 @@ public class GameLoopServiceTests
             Level = 1
         };
 
-        var playerState1 = new PlayerState(playerId1, [playerCard1])
+        var playerState1 = new PlayerState(playerId1, "Player1", [playerCard1])
         {
             CurrentElixir = 5m
         };
 
-        var playerState2 = new PlayerState(playerId2, [playerCard2])
+        var playerState2 = new PlayerState(playerId2, "Player2", [playerCard2])
         {
             CurrentElixir = 5m
         };

@@ -466,7 +466,7 @@ public class BattleServiceTests
             State = GameState.InProgress
         };
 
-        var playerState = new PlayerState(userId, cards);
+        var playerState = new PlayerState(userId, "TestPlayer", cards);
         playerState.CurrentElixir = 5;
 
         var entity = CreateTestTroop(userId, 5, 5);
@@ -531,7 +531,7 @@ public class BattleServiceTests
             State = GameState.InProgress
         };
 
-        var playerState = new PlayerState(userId, cards);
+        var playerState = new PlayerState(userId, "TestPlayer", cards);
         playerState.CurrentElixir = 3;
 
         _mockGameService
@@ -581,7 +581,7 @@ public class BattleServiceTests
             State = GameState.InProgress
         };
 
-        var playerState = new PlayerState(userId, cards);
+        var playerState = new PlayerState(userId, "user1", cards);
 
         _mockGameService
             .Setup(x => x.GetGame(sessionId))

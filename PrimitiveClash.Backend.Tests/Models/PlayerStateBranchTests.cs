@@ -14,7 +14,7 @@ public class PlayerStateBranchTests
         // Arrange
         var userId = Guid.NewGuid();
         var cards = CreatePlayerCards(userId, 8);
-        var playerState = new PlayerState(userId, cards);
+        var playerState = new PlayerState(userId, "TestPlayer", cards);
 
         // Act
         var nextCard = playerState.GetNextCard();
@@ -29,7 +29,7 @@ public class PlayerStateBranchTests
         // Arrange
         var userId = Guid.NewGuid();
         var cards = CreatePlayerCards(userId, 8);
-        var playerState = new PlayerState(userId, cards);
+        var playerState = new PlayerState(userId, "TestPlayer", cards);
         var cardToPlay = cards[2]; // Third card in hand
         var cardId = cardToPlay.Id;
 
@@ -48,7 +48,7 @@ public class PlayerStateBranchTests
         // Arrange
         var userId = Guid.NewGuid();
         var cards = CreatePlayerCards(userId, 8);
-        var playerState = new PlayerState(userId, cards);
+        var playerState = new PlayerState(userId, "TestPlayer", cards);
         var cardNotInHand = cards[5]; // Card in deck but not in hand
 
         // Act
@@ -64,7 +64,7 @@ public class PlayerStateBranchTests
         // Arrange
         var userId = Guid.NewGuid();
         var cards = CreatePlayerCards(userId, 8);
-        var playerState = new PlayerState(userId, cards);
+        var playerState = new PlayerState(userId, "TestPlayer", cards);
         var nonExistentCardId = Guid.NewGuid();
 
         // Act

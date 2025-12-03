@@ -105,7 +105,7 @@ public class AdditionalBranchTests
         };
 
         var playerCards = new List<PlayerCard> { playerCard, playerCard, playerCard, playerCard, playerCard };
-        var playerState = new PlayerState(player1Id, playerCards);
+        var playerState = new PlayerState(player1Id, "Player1", playerCards);
 
         // Act & Assert - Player 1 trying to spawn at y > 13 (invalid)
         var act = () => service.CreateEntity(arena, playerState, playerCard, 8, 14);
@@ -200,7 +200,7 @@ public class AdditionalBranchTests
         };
 
         var playerCards = new List<PlayerCard> { playerCard, playerCard, playerCard, playerCard, playerCard };
-        var playerState = new PlayerState(player2Id, playerCards);
+        var playerState = new PlayerState(player2Id, "Player2", playerCards);
 
         // Act & Assert - Player 2 trying to spawn at y < 16 (invalid)
         var act = () => service.CreateEntity(arena, playerState, playerCard, 8, 15);
