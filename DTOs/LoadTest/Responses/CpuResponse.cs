@@ -1,9 +1,10 @@
 namespace PrimitiveClash.Backend.DTOs.LoadTest.Responses
 {
-    public record PingResponse(
+    public record CpuResponse(
         string Status,
+        double Result,
+        string Hash,
         string Server,
-        DateTime Timestamp,
-        int Delay
+        DateTime Timestamp
     );
 }
