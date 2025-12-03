@@ -60,7 +60,7 @@ public class NotificationServiceNullCardTests
         var entity = new TroopEntity(userId, playerCard, 5, 5);
         
         // Player WITHOUT ConnectionId - this triggers the if branch in NotifyRefreshHand
-        var player = new PlayerState(userId, "TestPlayer", new List<PlayerCard> { playerCard });
+        var player = new PlayerState(userId, new List<PlayerCard> { playerCard });
         // ConnectionId is null by default
 
         // Act

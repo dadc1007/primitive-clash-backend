@@ -39,9 +39,6 @@ namespace PrimitiveClash.Backend.Services.Impl
                 playerStates.Add(playerState);
             }
 
-            playerStates[0].ArenaPosition = Models.Enums.ArenaPosition.Top;
-            playerStates[1].ArenaPosition = Models.Enums.ArenaPosition.Bottom;
-
             Dictionary<Guid, List<Tower>> towers = await _towerService.CreateAllGameTowers(
                 playerStates[0].Id,
                 playerStates[1].Id
@@ -179,7 +176,7 @@ namespace PrimitiveClash.Backend.Services.Impl
                 decimal before = player.CurrentElixir;
                 player.CurrentElixir = Math.Min(before + Game.ElixirPerSecond, Game.MaxElixir);
 
-                if (player.CurrentElixir != before && player.IsConnected && player.ConnectionId != null)
+                if (player.CurrentElixir != before)
                 {
                     await _notificationService.NotifyNewElixir(
                         player.ConnectionId,

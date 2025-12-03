@@ -178,7 +178,7 @@ public class ArenaServiceTests
             UserId = playerId,
             Card = card
         };
-        var playerState = new PlayerState(playerId, "Player1", new List<PlayerCard> { playerCard })
+        var playerState = new PlayerState(playerId, new List<PlayerCard> { playerCard })
         {
             CurrentElixir = 10
         };
@@ -211,7 +211,7 @@ public class ArenaServiceTests
             UserId = playerId,
             Card = card
         };
-        var playerState = new PlayerState(playerId, "Player1", new List<PlayerCard> { playerCard });
+        var playerState = new PlayerState(playerId, new List<PlayerCard> { playerCard });
 
         // Act & Assert
         Assert.Throws<InvalidSpawnPositionException>(
@@ -232,7 +232,7 @@ public class ArenaServiceTests
             UserId = playerId,
             Card = card
         };
-        var playerState = new PlayerState(playerId, "Player1", new List<PlayerCard> { playerCard });
+        var playerState = new PlayerState(playerId, new List<PlayerCard> { playerCard });
 
         // Player 1 trying to spawn on player 2's side (y > 13)
         // Act & Assert
@@ -342,7 +342,7 @@ public class ArenaServiceTests
         arena.PlaceEntity(troop);
         var cellBeforeRemove = arena.Grid[troop.Y][troop.X];
         cellBeforeRemove.GroundEntity.Should().BeTrue();
-
+        
         // Act
         _arenaService.RemoveEntity(arena, troop);
 

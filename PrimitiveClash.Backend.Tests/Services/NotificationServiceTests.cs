@@ -88,7 +88,7 @@ public class NotificationServiceTests
             Level = 1
         };
 
-        var playerState = new PlayerState(playerId, "Player1", [playerCard, nextCard])
+        var playerState = new PlayerState(playerId, [playerCard, nextCard])
         {
             ConnectionId = connectionId,
             CurrentElixir = 7.5m
@@ -304,7 +304,7 @@ public class NotificationServiceTests
             Level = 1
         };
 
-        var playerState = new PlayerState(playerId, "Player1", [playerCard])
+        var playerState = new PlayerState(playerId, [playerCard])
         {
             ConnectionId = null, // No connection
             CurrentElixir = 7.5m
@@ -362,7 +362,7 @@ public class NotificationServiceTests
             Level = 1
         };
 
-        var playerState = new PlayerState(playerId, "Player1", [playerCard])
+        var playerState = new PlayerState(playerId, [playerCard])
         {
             ConnectionId = connectionId,
             CurrentElixir = 7.5m

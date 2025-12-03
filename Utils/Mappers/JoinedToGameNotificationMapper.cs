@@ -25,8 +25,6 @@ public static class JoinedToGameNotificationMapper
         playerStateNotifications.AddRange(
             playerStates.Select(playerState => new PlayerStateNotification(
                 playerState.Id,
-                playerState.Username,
-                playerState.ArenaPosition,
                 playerState.IsConnected,
                 playerState.ConnectionId,
                 playerState.CurrentElixir

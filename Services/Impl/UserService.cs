@@ -13,7 +13,7 @@ namespace PrimitiveClash.Backend.Services.Impl
         public async Task<User> GetOrCreateUser(string oid, string email)
         {
             User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == oid);
-
+            
             if (user != null) return user;
 
             user = new User
@@ -30,13 +30,6 @@ namespace PrimitiveClash.Backend.Services.Impl
             await _context.SaveChangesAsync();
 
             return user;
-        }
-
-        public async Task<string> GetUserName(Guid userId)
-        {
-            User user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new UserNotFoundException(userId);
-
-            return user.Username;
         }
     }
 }

@@ -89,7 +89,7 @@ public class FinalBranchCoverageTests
             Health = 1000
         };
 
-        var playerState = new PlayerState(playerId, "Player1", new List<PlayerCard> 
+        var playerState = new PlayerState(playerId, new List<PlayerCard> 
         { 
             playerCard, cardToPut, playerCard, playerCard, playerCard 
         })

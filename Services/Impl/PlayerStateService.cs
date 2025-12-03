@@ -2,19 +2,17 @@ using PrimitiveClash.Backend.Models;
 
 namespace PrimitiveClash.Backend.Services.Impl
 {
-    public class PlayerStateService(IDeckService deckService, IUserService userService) : IPlayerStateService
+    public class PlayerStateService(IDeckService deckService) : IPlayerStateService
     {
         private readonly IDeckService _deckService = deckService;
-        private readonly IUserService _userService = userService;
-        private static readonly Random Rng = new();
-
+        private static readonly Random Rng = new Random();
+        
         public async Task<PlayerState> CreatePlayerState(Guid userId)
         {
-            string username = await _userService.GetUserName(userId);
             Deck deck = await _deckService.GetDeckByUserId(userId);
             List<PlayerCard> initialCards = Shuffle(deck);
-
-            return new PlayerState(userId, username, initialCards);
+            
+            return new PlayerState(userId, initialCards);
         }
 
         private static List<PlayerCard> Shuffle(Deck deck)
@@ -25,12 +23,12 @@ namespace PrimitiveClash.Backend.Services.Impl
             while (n > 1)
             {
                 n--;
-
+                
                 int k = Rng.Next(n + 1);
-
+                
                 (list[k], list[n]) = (list[n], list[k]);
             }
-
+            
             return list;
         }
     }
