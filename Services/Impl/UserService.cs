@@ -45,5 +45,11 @@ namespace PrimitiveClash.Backend.Services.Impl
             user.MatchId = matchId;
             await _context.SaveChangesAsync();
         }
+
+        public async Task<Guid?> GetMatchId(Guid userId)
+        {
+            User user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new UserNotFoundException(userId);
+            return user.MatchId;
+        }
     }
 }
