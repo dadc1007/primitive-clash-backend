@@ -13,7 +13,9 @@ namespace PrimitiveClash.Backend.Services.Impl
         IArenaService arenaService,
         IGameLoopService gameLoopService,
         INotificationService notificationService,
-        IDatabase redis
+        IUserService userService,
+        IDatabase redis,
+        IServiceScopeFactory serviceScopeFactory
     ) : IGameService
     {
         private const string GameKey = "game:";
@@ -23,7 +25,9 @@ namespace PrimitiveClash.Backend.Services.Impl
         private readonly IArenaService _arenaService = arenaService;
         private readonly IGameLoopService _gameLoopService = gameLoopService;
         private readonly INotificationService _notificationService = notificationService;
+        private readonly IUserService _userService = userService;
         private readonly IDatabase _redis = redis;
+        private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
 
         public async Task CreateNewGame(Guid sessionId, List<Guid> userIds)
         {
@@ -41,12 +45,14 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             playerStates[0].ArenaPosition = Models.Enums.ArenaPosition.Top;
             playerStates[1].ArenaPosition = Models.Enums.ArenaPosition.Bottom;
-
             Dictionary<Guid, List<Tower>> towers = await _towerService.CreateAllGameTowers(
                 playerStates[0].Id,
                 playerStates[1].Id
             );
             Arena arena = await _arenaService.CreateArena(towers);
+
+            await _userService.UpdateUserMatchId(playerStates[0].Id, sessionId);
+            await _userService.UpdateUserMatchId(playerStates[1].Id, sessionId);
 
             await SaveGame(new Game(sessionId, playerStates, arena));
             await Task.WhenAll(
@@ -78,6 +84,12 @@ namespace PrimitiveClash.Backend.Services.Impl
                 sessionId,
                 new EndGameNotification(winnerId, losserId, towersWinner, towersLosser)
             );
+
+            using IServiceScope scope = _serviceScopeFactory.CreateScope();
+            IUserService userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+
+            await userService.UpdateUserMatchId(winnerId, null);
+            await userService.UpdateUserMatchId(losserId, null);
         }
 
         public async Task SaveGame(Game game)

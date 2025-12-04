@@ -38,5 +38,12 @@ namespace PrimitiveClash.Backend.Services.Impl
 
             return user.Username;
         }
+
+        public async Task UpdateUserMatchId(Guid userId, Guid? matchId)
+        {
+            User user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new UserNotFoundException(userId);
+            user.MatchId = matchId;
+            await _context.SaveChangesAsync();
+        }
     }
 }

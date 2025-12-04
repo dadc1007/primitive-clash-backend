@@ -6,5 +6,6 @@ namespace PrimitiveClash.Backend.Services
     {
         Task<User> GetOrCreateUser(string oid, string email);
         Task<string> GetUserName(Guid userId);
+        Task UpdateUserMatchId(Guid userId, Guid? matchId);
     }
 }
