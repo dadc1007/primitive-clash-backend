@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using PrimitiveClash.Backend.Data;
+using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
 using PrimitiveClash.Backend.Services;
 using PrimitiveClash.Backend.Services.Impl;
@@ -105,5 +106,200 @@ public class UserServiceTests : IClassFixture<DatabaseFixture>
         await service.GetOrCreateUser(oid, email);
 
         deckServiceMock.Verify(d => d.InitializeDeck(userId), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetUserName_ExistingUser_ReturnsUsername()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
+
+        var userId = Guid.NewGuid();
+        var expectedUsername = "testuser";
+
+        var user = new User
+        {
+            Id = userId,
+            Username = expectedUsername,
+            Email = "testuser@example.com"
+        };
+
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var result = await service.GetUserName(userId);
+
+        result.Should().Be(expectedUsername);
+    }
+
+    [Fact]
+    public async Task GetUserName_NonExistingUser_ThrowsUserNotFoundException()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
+
+        var userId = Guid.NewGuid();
+
+        await Assert.ThrowsAsync<UserNotFoundException>(() => service.GetUserName(userId));
+    }
+
+    [Fact]
+    public async Task UpdateUserMatchId_ExistingUser_UpdatesMatchId()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
+
+        var userId = Guid.NewGuid();
+        var matchId = Guid.NewGuid();
+
+        var user = new User
+        {
+            Id = userId,
+            Username = "testuser",
+            Email = "testuser@example.com"
+        };
+
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await service.UpdateUserMatchId(userId, matchId);
+
+        var updatedUser = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        updatedUser.Should().NotBeNull();
+        updatedUser!.MatchId.Should().Be(matchId);
+    }
+
+    [Fact]
+    public async Task UpdateUserMatchId_WithNullMatchId_ClearsMatchId()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
+
+        var userId = Guid.NewGuid();
+        var initialMatchId = Guid.NewGuid();
+
+        var user = new User
+        {
+            Id = userId,
+            Username = "testuser",
+            Email = "testuser@example.com",
+            MatchId = initialMatchId
+        };
+
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await service.UpdateUserMatchId(userId, null);
+
+        var updatedUser = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        updatedUser.Should().NotBeNull();
+        updatedUser!.MatchId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateUserMatchId_NonExistingUser_ThrowsUserNotFoundException()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
+
+        var userId = Guid.NewGuid();
+        var matchId = Guid.NewGuid();
+
+        await Assert.ThrowsAsync<UserNotFoundException>(() => service.UpdateUserMatchId(userId, matchId));
+    }
+
+    [Fact]
+    public async Task GetMatchId_ExistingUserWithMatchId_ReturnsMatchId()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
+
+        var userId = Guid.NewGuid();
+        var matchId = Guid.NewGuid();
+
+        var user = new User
+        {
+            Id = userId,
+            Username = "testuser",
+            Email = "testuser@example.com",
+            MatchId = matchId
+        };
+
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var result = await service.GetMatchId(userId);
+
+        result.Should().Be(matchId);
+    }
+
+    [Fact]
+    public async Task GetMatchId_ExistingUserWithoutMatchId_ReturnsNull()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
+
+        var userId = Guid.NewGuid();
+
+        var user = new User
+        {
+            Id = userId,
+            Username = "testuser",
+            Email = "testuser@example.com",
+            MatchId = null
+        };
+
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var result = await service.GetMatchId(userId);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetMatchId_NonExistingUser_ThrowsUserNotFoundException()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
+
+        var userId = Guid.NewGuid();
+
+        await Assert.ThrowsAsync<UserNotFoundException>(() => service.GetMatchId(userId));
+    }
+
+    [Fact]
+    public async Task GetOrCreateUser_NewUser_SavesUserToDatabase()
+    {
+        using var context = _fixture.CreateContext();
+        var deckServiceMock = new Mock<IDeckService>();
+        var service = new UserService(context, deckServiceMock.Object);
+
+        var userId = Guid.NewGuid();
+        var oid = userId.ToString();
+        var email = "persistent@example.com";
+
+        var deck = new Deck { UserId = userId, PlayerCards = new List<PlayerCard>() };
+        deckServiceMock.Setup(d => d.InitializeDeck(userId)).ReturnsAsync(deck);
+
+        var result = await service.GetOrCreateUser(oid, email);
+
+        // Verify the user was created
+        result.Should().NotBeNull();
+        result.Id.ToString().Should().Be(oid);
+        result.Email.Should().Be(email);
+
+        // Verify the user exists in database
+        var savedUser = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        savedUser.Should().NotBeNull();
+        savedUser!.Id.ToString().Should().Be(oid);
     }
 }

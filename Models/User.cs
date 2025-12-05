@@ -13,6 +13,7 @@ namespace PrimitiveClash.Backend.Models
         public int Trophies { get; private set; } = 0;
         public List<PlayerCard> PlayerCards { get; set; } = [];
         public Deck? Deck { get; set; }
+        public Guid? MatchId { get; set; }
 
         public void AddGold(int amount)
         {
