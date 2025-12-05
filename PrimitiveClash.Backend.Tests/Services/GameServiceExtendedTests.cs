@@ -1,4 +1,6 @@
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moq;
 using PrimitiveClash.Backend.Exceptions;
 using PrimitiveClash.Backend.Models;
@@ -18,7 +20,10 @@ public class GameServiceExtendedTests
     private readonly Mock<IArenaService> _mockArenaService;
     private readonly Mock<IGameLoopService> _mockGameLoopService;
     private readonly Mock<INotificationService> _mockNotificationService;
+    private readonly Mock<IUserService> _mockUserService;
     private readonly Mock<IDatabase> _mockRedis;
+    private readonly Mock<IServiceScopeFactory> _mockServiceScopeFactory;
+
     private readonly GameService _gameService;
 
     public GameServiceExtendedTests()
@@ -28,7 +33,23 @@ public class GameServiceExtendedTests
         _mockArenaService = new Mock<IArenaService>();
         _mockGameLoopService = new Mock<IGameLoopService>();
         _mockNotificationService = new Mock<INotificationService>();
+        _mockUserService = new Mock<IUserService>();
         _mockRedis = new Mock<IDatabase>();
+        _mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+
+        // Setup para el ServiceScopeFactory
+        var mockServiceScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+
+        mockServiceProvider
+            .Setup(x => x.GetService(typeof(IUserService)))
+            .Returns(_mockUserService.Object);
+
+        mockServiceScope.Setup(x => x.ServiceProvider).Returns(mockServiceProvider.Object);
+
+        _mockServiceScopeFactory
+            .Setup(x => x.CreateScope())
+            .Returns(mockServiceScope.Object);
 
         _gameService = new GameService(
             _mockPlayerStateService.Object,
@@ -36,7 +57,9 @@ public class GameServiceExtendedTests
             _mockArenaService.Object,
             _mockGameLoopService.Object,
             _mockNotificationService.Object,
-            _mockRedis.Object
+            _mockUserService.Object,
+            _mockRedis.Object,
+            _mockServiceScopeFactory.Object
         );
     }
 
@@ -259,13 +282,13 @@ public static class TestHelpers
 {
     public static Arena CreateTestArena()
     {
-        var arenaTemplate = new ArenaTemplate 
-        { 
+        var arenaTemplate = new ArenaTemplate
+        {
             Id = Guid.NewGuid(),
             Name = "Test Arena",
             RequiredTrophies = 0
         };
-        
+
         var towers = new Dictionary<Guid, List<Tower>>();
         var entities = new Dictionary<Guid, List<ArenaEntity>>();
         var grid = new Cell[30][];
@@ -277,7 +300,7 @@ public static class TestHelpers
                 grid[i][j] = new Cell { Type = CellType.Ground };
             }
         }
-        
+
         // Usar el constructor JSON que no inicializa el layout
         return new Arena(Guid.NewGuid(), arenaTemplate, grid, towers, entities);
     }

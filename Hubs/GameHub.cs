@@ -139,12 +139,24 @@ namespace PrimitiveClash.Backend.Hubs
                 && userIdObj is Guid disconnectedUserId
             )
             {
-                await _gameService.UpdatePlayerConnectionStatus(
-                    sessionId,
-                    disconnectedUserId,
-                    null,
-                    isConnected: false
-                );
+                try
+                {
+                    await _gameService.UpdatePlayerConnectionStatus(
+                        sessionId,
+                        disconnectedUserId,
+                        null,
+                        isConnected: false
+                    );
+                }
+                catch (GameNotFoundException)
+                {
+                    // El juego ya terminó y fue eliminado, esto es esperado
+                    _logger.LogInformation(
+                        "[OnDisconnectedAsync] El juego {SessionId} ya finalizó, desconexión ignorada para usuario {UserId}",
+                        sessionId,
+                        disconnectedUserId
+                    );
+                }
             }
 
             await base.OnDisconnectedAsync(exception);
